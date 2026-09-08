@@ -1,0 +1,36 @@
+# Local development infrastructure for Waffir.
+#
+#   docker compose up -d postgres
+#
+# Only PostgreSQL runs here. Laravel is started with `php artisan serve` and
+# Flutter with `flutter run`, so the usual debug tooling keeps working.
+#
+# If you cannot use Docker, install PostgreSQL 16 directly and create the same
+# role and databases by hand - see README.md, "Without Docker".
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: waffir-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: waffir
+      POSTGRES_USER: waffir
+      # Development password only. Never reuse this anywhere real.
+      POSTGRES_PASSWORD: waffir_dev_password
+      # Deterministic collation so ordering matches between machines.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - waffir-postgres-data:/var/lib/postgresql/data
+      # Creates the separate database that the feature tests run against.
+      - ./backend/docker/init-test-db.sh:/docker-entrypoint-initdb.d/10-init-test-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waffir -d waffir"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  waffir-postgres-data:
