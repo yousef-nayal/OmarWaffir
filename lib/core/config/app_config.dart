@@ -17,7 +17,17 @@ class AppConfig {
 
   /// true = التطبيق يعرض بيانات وهمية (MockData) لأغراض العرض والتصميم.
   /// false = التطبيق يقرأ وّيكتب من الـ backend الحقيقي عبر ApiClient.
-  static const bool useMockData = true;
+  /// Mock mode is now an explicit build-time switch and defaults to OFF, so a
+  /// normal build can never silently show demo data:
+  ///
+  ///   flutter run --dart-define=USE_MOCK_DATA=false \
+  ///               --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
+  ///
+  /// Pass --dart-define=USE_MOCK_DATA=true only for offline UI work.
+  static const bool useMockData = bool.fromEnvironment(
+    "USE_MOCK_DATA",
+    defaultValue: false,
+  );
 
   /// حجم الصفحة الافتراضي لأي endpoint يدعم pagination
   static const int defaultPageSize = 20;

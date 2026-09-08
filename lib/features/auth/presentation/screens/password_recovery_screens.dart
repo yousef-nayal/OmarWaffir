@@ -694,11 +694,20 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final provider = context.read<AppProvider>();
     setState(() => _isSubmitting = true);
-    final ok = await provider.resetPassword(
-      phone: _phone,
-      code: _code,
-      newPassword: _newPasswordController.text,
-    );
+    // ✅ مساران مختلفان لنفس الشاشة:
+    //  • من الإعدادات (جلسة مفتوحة) → PUT /auth/change-password برمز تحقق
+    //    صادر عن POST /auth/change-password/request-otp.
+    //  • من "نسيت كلمة المرور" (بلا جلسة) → PUT /auth/reset-password.
+    final ok = _fromSettings
+        ? await provider.changePassword(
+            code: _code,
+            newPassword: _newPasswordController.text,
+          )
+        : await provider.resetPassword(
+            phone: _phone,
+            code: _code,
+            newPassword: _newPasswordController.text,
+          );
     if (!mounted) return;
     setState(() => _isSubmitting = false);
     if (ok) {
@@ -714,7 +723,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _resend() async {
     final provider = context.read<AppProvider>();
     setState(() => _isResending = true);
-    final ok = await provider.forgotPassword(_phone);
+    // ✅ نفس التفريع أعلاه: رمز تغيير كلمة المرور للمستخدم المسجّل دخوله،
+    // ورمز الاستعادة لمن لا يملك جلسة.
+    final ok = _fromSettings
+        ? await provider.requestChangePasswordOtp()
+        : await provider.forgotPassword(_phone);
     if (!mounted) return;
     setState(() => _isResending = false);
     if (ok) {

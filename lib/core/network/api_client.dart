@@ -259,8 +259,16 @@ class _AuthInterceptor extends Interceptor {
         options: Options(headers: {'Authorization': null}),
       );
 
-      final newAccessToken = response.data['access_token'] as String;
-      final newRefreshToken = response.data['refresh_token'] as String?;
+      // ✅ إصلاح — الخادم يعيد الرموز داخل غلاف الاستجابة الموحّد:
+      //   { "success": true, "data": { "access_token": ..., "refresh_token": ... } }
+      // كان الكود السابق يقرأ الجذر مباشرة فيفشل التجديد دائماً.
+      final body = response.data;
+      final payload = (body is Map && body['data'] is Map)
+          ? body['data'] as Map
+          : body as Map;
+
+      final newAccessToken = payload['access_token'] as String;
+      final newRefreshToken = payload['refresh_token'] as String?;
 
       await _storage.write(key: 'access_token', value: newAccessToken);
       if (newRefreshToken != null) {

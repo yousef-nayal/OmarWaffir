@@ -35,7 +35,16 @@ class AuthService {
   // الآن تستقبل locationId (معرّف حقيقي، يُحسَب في RegisterScreen عبر
   // CatalogProvider.locationIdForArea) وترسله مباشرة بدل sector.
   // ══════════════════════════════════════════════════════════════════
-  Future<AuthResult> register({
+  // ══════════════════════════════════════════════════════════════════
+  // ✅ إصلاح جوهري ثانٍ — التسجيل لم يعد يُصدِر أي جلسة.
+  //
+  // الخادم ينشئ حساباً غير مؤكَّد ويرسل رمز التحقق فقط، بلا access/refresh
+  // token إطلاقاً (راجع POST /auth/register في docs/FINAL_API_CONTRACT.md).
+  // كان الكود السابق يفترض وجود الرموز في الرد ويحفظها فوراً، ما كان يعني
+  // عملياً أن حساباً غير مؤكَّد يستطيع استخدام التطبيق بالكامل بمجرد إعادة
+  // تشغيله. الرموز تُحفَظ الآن في [verifyOtp] فقط — بعد تأكيد رقم الهاتف.
+  // ══════════════════════════════════════════════════════════════════
+  Future<RegistrationResult> register({
     required String name,
     required String phone,
     required String password,
@@ -51,12 +60,7 @@ class AuthService {
         'location_id': locationId,
       },
     );
-    final result = AuthResult.fromJson(response);
-    await _api.saveTokens(
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-    );
-    return result;
+    return RegistrationResult.fromJson(response);
   }
 
   /// POST /auth/admin/login — يقبل رقم هاتف أو بريد إلكتروني في حقل username
@@ -87,11 +91,21 @@ class AuthService {
     }
   }
 
-  /// PUT /auth/profile
-  Future<UserModel> updateProfile({required String name}) async {
+  /// PUT /auth/profile — الاسم و/أو موقع الحساب.
+  ///
+  /// ✅ [locationId] اختياري: يُرسَل فقط عند تغيير المنطقة من الإعدادات، حتى
+  /// يبقى موقع الحساب على الخادم متزامناً مع الموقع المختار محلياً.
+  Future<UserModel> updateProfile({
+    String? name,
+    String? locationId,
+  }) async {
     final response = await _api.put<Map<String, dynamic>>(
       '/auth/profile',
-      data: {'name': name},
+      data: {
+        if (name != null && name.isNotEmpty) 'name': name,
+        if (locationId != null && locationId.isNotEmpty)
+          'location_id': locationId,
+      },
     );
     return UserModel.fromJson(
         response['data'] as Map<String, dynamic>? ?? response);
@@ -105,15 +119,24 @@ class AuthService {
     );
   }
 
-  /// POST /auth/verify-otp — ✅ جديد — تأكيد رقم الهاتف بعد إنشاء حساب جديد
-  Future<void> verifyOtp({
+  /// POST /auth/verify-otp — تأكيد رقم الهاتف بعد إنشاء حساب جديد.
+  ///
+  /// ✅ هذه هي النقطة الوحيدة التي تُصدَر فيها جلسة لحساب جديد: الخادم يعيد
+  /// access/refresh token مع بيانات المستخدم، ونحفظها هنا.
+  Future<AuthResult> verifyOtp({
     required String phone,
     required String code,
   }) async {
-    await _api.post<void>(
+    final response = await _api.post<Map<String, dynamic>>(
       '/auth/verify-otp',
       data: {'phone_number': phone, 'code': code},
     );
+    final result = AuthResult.fromJson(response);
+    await _api.saveTokens(
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    );
+    return result;
   }
 
   /// POST /auth/resend-otp — ✅ جديد — إعادة إرسال رمز التحقق
@@ -142,15 +165,27 @@ class AuthService {
     );
   }
 
+  /// POST /auth/change-password/request-otp — ✅ جديد — يرسل رمز تحقق إلى
+  /// رقم هاتف المستخدم الحالي قبل تغيير كلمة المرور من الإعدادات.
+  Future<void> requestChangePasswordOtp() async {
+    await _api.post<void>('/auth/change-password/request-otp');
+  }
+
   /// PUT /auth/change-password
+  ///
+  /// ✅ المسار الأساسي أصبح قائماً على رمز التحقق ([code]) كما تصف الأطروحة.
+  /// [currentPassword] ما زال مقبولاً من الخادم للتوافق مع الشاشة القديمة.
   Future<void> changePassword({
-    required String currentPassword,
+    String? code,
+    String? currentPassword,
     required String newPassword,
   }) async {
     await _api.put<void>(
       '/auth/change-password',
       data: {
-        'current_password': currentPassword,
+        if (code != null && code.isNotEmpty) 'code': code,
+        if (currentPassword != null && currentPassword.isNotEmpty)
+          'current_password': currentPassword,
         'new_password': newPassword,
         'new_password_confirmation': newPassword,
       },
@@ -165,6 +200,26 @@ class AuthService {
   }
 
   Future<bool> hasSavedSession() => _api.hasValidSession();
+}
+
+/// ✅ جديد — نتيجة POST /auth/register: لا تحتوي أي رموز جلسة، فقط تأكيد أن
+/// الحساب أُنشئ ويحتاج تفعيلاً عبر رمز التحقق.
+class RegistrationResult {
+  final bool requiresVerification;
+  final String phone;
+
+  const RegistrationResult({
+    required this.requiresVerification,
+    required this.phone,
+  });
+
+  factory RegistrationResult.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>? ?? json;
+    return RegistrationResult(
+      requiresVerification: data['requires_verification'] as bool? ?? true,
+      phone: data['phone_number'] as String? ?? '',
+    );
+  }
 }
 
 class AuthResult {
