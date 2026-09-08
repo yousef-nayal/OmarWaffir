@@ -21,13 +21,23 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   String _filter = 'الكل';
-  final List<String> _cats = ['الكل', 'حبوب', 'زيوت', 'سكريات', 'بقوليات'];
+  // ✅ إصلاح — كانت التصنيفات قائمة ثابتة في الكود ('حبوب'، 'سكريات'...) لا
+  // تطابق أي قيمة فعلية في عمود products.category (التي هي 'حبوب ومطاحن'،
+  // 'سكريات ومؤن'...)، فكان أي فلترة تُرجع قائمة فارغة دائماً. أصبحت الآن
+  // تُقرأ من GET /products/categories.
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductProvider>().loadProducts();
+      final catalogProvider = context.read<CatalogProvider>();
+      if (catalogProvider.locations.isEmpty) catalogProvider.loadLocations();
+      final productProvider = context.read<ProductProvider>();
+      productProvider.loadCategories();
+      // ✅ الأسعار السوقية المعروضة خاصة بالحي المختار حالياً.
+      productProvider.loadProducts(
+            locationId: context.read<AppProvider>().selectedLocationId,
+          );
     });
   }
 
@@ -109,17 +119,32 @@ class _ProductsScreenState extends State<ProductsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: WaffirSearchField(
                 hint: 'ابحث عن منتج...',
-                onChanged: (v) =>
-                    context.read<ProductProvider>().loadProducts(search: v),
+                onChanged: (v) => context.read<ProductProvider>().loadProducts(
+                      search: v,
+                      category: _filter == 'الكل' ? null : _filter,
+                      locationId:
+                          context.read<AppProvider>().selectedLocationId,
+                    ),
               ),
             ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: FilterChipRow(
-                  options: _cats,
+                  options: context.watch<ProductProvider>().categories,
                   selected: _filter,
-                  onSelected: (v) => setState(() => _filter = v)),
+                  // ✅ الفلترة أصبحت تُنفَّذ على الخادم أيضاً، لا على الصفحة
+                  // المُحمَّلة محلياً فقط — وإلا فإن اختيار تصنيف مع تفعيل
+                  // الترقيم يعرض نتائج الصفحة الأولى فقط.
+                  onSelected: (v) {
+                    setState(() => _filter = v);
+                    context.read<ProductProvider>().loadProducts(
+                          category: v == 'الكل' ? null : v,
+                          locationId:
+                              context.read<AppProvider>().selectedLocationId,
+                          refresh: true,
+                        );
+                  }),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -1205,14 +1230,30 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     );
   }
 
-  /// ✅ محدَّث — يستخدم الآن منتقي الكتل/الأحياء الموحّد بدل قائمة محلية
+  /// ✅ محدَّث — يترجم الحي المختار إلى location_id حقيقي ويحفظه، ثم يزامنه
+  /// مع موقع الحساب على الخادم (PUT /auth/profile) ويعيد تحميل المنتجات.
   void _showLocationPicker(AppProvider provider) {
     showLocationPickerSheet(
       context,
       currentBlock: provider.userBlock,
       currentArea: provider.userLocation,
-      onSelect: (block, area) =>
-          provider.updateLocation(block: block, area: area),
+      onSelect: (block, area) async {
+        final catalogProvider = context.read<CatalogProvider>();
+        if (catalogProvider.locations.isEmpty) {
+          await catalogProvider.loadLocations();
+        }
+        final locationId = catalogProvider.locationIdForArea(area);
+        await provider.updateLocation(
+          block: block,
+          area: area,
+          locationId: locationId,
+        );
+        if (!mounted) return;
+        await context.read<ProductProvider>().loadProducts(
+              locationId: provider.selectedLocationId,
+              refresh: true,
+            );
+      },
     );
   }
 
@@ -1229,7 +1270,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     if (confirmed != true || !mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await provider.forgotPassword(provider.userPhone);
+    // ✅ المستخدم مسجّل دخوله هنا، فنستخدم دورة تغيير كلمة المرور المخصّصة
+    // (POST /auth/change-password/request-otp) بدل دورة استعادة الحساب.
+    final ok = await provider.requestChangePasswordOtp();
     if (!mounted) return;
     if (ok) {
       await Navigator.pushNamed(context, AppRoutes.resetPassword,

@@ -34,6 +34,15 @@ class AppProvider extends ChangeNotifier {
   // "حلب - المنطقة" بلا أي ربط رسمي بالكتلة.
   String _userBlock = AleppoBlocks.all.first.name; // "الكتلة الأولى"
   String _userLocation = AleppoBlocks.all.first.areas.first; // "ألمجي"
+  // ══════════════════════════════════════════════════════════════════════
+  // ✅ جديد — المعرّف الحقيقي (locations.id) للموقع المختار حالياً. الكتلة
+  // والحي أعلاه يبقيان للعرض فقط؛ هذا المعرّف هو ما يُرسَل للخادم في كل
+  // استعلام حسّاس للموقع (GET /products?location_id=...). يُحفَظ في
+  // SharedPreferences تحت المفتاح selected_location_id فيصمد بعد إغلاق
+  // التطبيق، ويُملأ أول مرة من CatalogProvider.locationIdForArea أو من
+  // users.location_id القادم من /auth/me.
+  // ══════════════════════════════════════════════════════════════════════
+  String? _selectedLocationId;
   String _userName = '';
   String _userPhone = '';
   String _userId = '';
@@ -56,6 +65,9 @@ class AppProvider extends ChangeNotifier {
   /// اسم المنطقة/الحي الحالي للمستخدم (مثال: "الفرقان")
   String get userLocation => _userLocation;
 
+  /// ✅ معرّف الموقع المختار الذي تُرسَل به الاستعلامات الحسّاسة للموقع.
+  String? get selectedLocationId => _selectedLocationId;
+
   /// نص عرض جاهز يجمع الكتلة والمنطقة معاً: "الكتلة الخامسة — الفرقان"
   String get userLocationDisplay =>
       AleppoBlocks.displayLabel(block: _userBlock, area: _userLocation);
@@ -75,6 +87,7 @@ class AppProvider extends ChangeNotifier {
     _userBlock = prefs.getString('user_block') ?? AleppoBlocks.all.first.name;
     _userLocation =
         prefs.getString('user_area') ?? AleppoBlocks.all.first.areas.first;
+    _selectedLocationId = prefs.getString('selected_location_id');
     notifyListeners();
   }
 
@@ -86,7 +99,9 @@ class AppProvider extends ChangeNotifier {
     _setLoading();
     try {
       final user = await _authService.getCurrentUser();
-      _setUser(user, isAdmin: user.role == 'admin');
+      // ✅ الصلاحية تُقرأ من roleLevel الرقمي القادم من الخادم مباشرة، لا من
+      // أي افتراض محلي: 1 = مسؤول، 2 = مسؤول رئيسي.
+      _setUser(user, isAdmin: user.roleLevel >= 1);
     } catch (_) {
       _authStatus = AuthStatus.unauthenticated;
       notifyListeners();
@@ -152,16 +167,14 @@ class AppProvider extends ChangeNotifier {
         password: password,
         locationId: locationId,
       );
-      // ✅ ملاحظة موثّقة في docs/API_ADDENDUM.md: التسجيل يعيد access/refresh
-      // token فوراً حسب التوثيق، لكن المستخدم لا يزال بحاجة لتأكيد OTP قبل
-      // اعتباره "مُفعَّلاً بالكامل". نحفظ بيانات المستخدم هنا حتى تكون شاشة
-      // OTP قادرة على قراءتها، لكن الحالة العامة تبقى unauthenticated حتى
-      // ينجح verifyOtp، فلا يُسمح للمستخدم بتخطي التفعيل عبر إعادة تشغيل
-      // التطبيق مثلاً (راجع الملاحظة الكاملة في الملحق).
-      _userName = result.user.name;
-      _userPhone = result.user.phone;
-      _userId = result.user.id;
-      _currentUser = result.user;
+      // ✅ إصلاح جوهري — التسجيل لم يعد يُنشئ جلسة إطلاقاً: الخادم ينشئ حساباً
+      // غير مؤكَّد ويرسل رمز التحقق فقط، بلا أي token. الحالة تبقى
+      // unauthenticated حتى ينجح verifyOtp، فلا يمكن تخطي التفعيل بإعادة
+      // تشغيل التطبيق. نحتفظ فقط بالرقم والموقع المختار لشاشة OTP.
+      _userPhone = result.phone.isNotEmpty ? result.phone : phone;
+      _userName = name;
+      _selectedLocationId = locationId;
+      _authStatus = AuthStatus.unauthenticated;
       await _persistLocation();
       notifyListeners();
       return true;
@@ -182,7 +195,9 @@ class AppProvider extends ChangeNotifier {
     try {
       final result =
           await _authService.adminLogin(username: username, password: password);
-      _setUser(result.user, isAdmin: true);
+      // ✅ الخادم هو من يقرر الصلاحية: نقرأ roleLevel من الرد بدل افتراض
+      // isAdmin=true لمجرد أن الطلب جاء من شاشة الإدارة.
+      _setUser(result.user, isAdmin: result.user.roleLevel >= 1);
       return true;
     } on ApiException catch (e) {
       _setError(e.message);
@@ -222,10 +237,11 @@ class AppProvider extends ChangeNotifier {
       return false;
     }
     try {
-      await _authService.verifyOtp(phone: phone, code: code);
-      // ✅ الحساب الآن مُفعَّل فعلياً — نعتبر المستخدم مسجّل دخوله
-      _authStatus = AuthStatus.authenticated;
-      notifyListeners();
+      // ✅ الخادم يعيد هنا access/refresh token وبيانات المستخدم؛ AuthService
+      // يحفظ الرموز، ونحن نضبط الجلسة الكاملة. هذه أول لحظة يصبح فيها الحساب
+      // الجديد مُصادَقاً عليه فعلياً.
+      final result = await _authService.verifyOtp(phone: phone, code: code);
+      _setUser(result.user, isAdmin: result.user.roleLevel >= 1);
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -282,20 +298,27 @@ class AppProvider extends ChangeNotifier {
   // مجدداً" عند تعديل الاسم من شاشة "الملف الشخصي". الآن تتبع نفس نمط بقية
   // دوال AppProvider (login, register, forgotPassword...): في وضع العرض
   // التجريبي تُحدَّث الحالة محلياً فوراً بلا أي اتصال شبكة.
-  Future<bool> updateProfile({required String name}) async {
+  Future<bool> updateProfile({String? name, String? locationId}) async {
+    final newName = name ?? _userName;
     if (AppConfig.useMockData) {
       await Future.delayed(const Duration(milliseconds: 400));
-      _userName = name;
+      _userName = newName;
       if (_currentUser != null)
-        _currentUser = _currentUser!.copyWith(name: name);
+        _currentUser = _currentUser!.copyWith(name: newName);
       notifyListeners();
       return true;
     }
     try {
-      await _authService.updateProfile(name: name);
-      _userName = name;
-      if (_currentUser != null)
-        _currentUser = _currentUser!.copyWith(name: name);
+      final updated = await _authService.updateProfile(
+        name: name,
+        locationId: locationId,
+      );
+      _userName = updated.name;
+      _currentUser = updated;
+      if (updated.locationId != null) {
+        _selectedLocationId = updated.locationId;
+        await _persistLocation();
+      }
       notifyListeners();
       return true;
     } on ApiException catch (e) {
@@ -306,8 +329,11 @@ class AppProvider extends ChangeNotifier {
   }
 
   // ✅ نفس الإصلاح أعلاه: كانت تتجاهل AppConfig.useMockData أيضاً.
+  /// ✅ المسار الأساسي أصبح قائماً على رمز التحقق (OTP) كما تصف الأطروحة؛
+  /// [currentPassword] يبقى مدعوماً للتوافق مع الشاشة القديمة.
   Future<bool> changePassword({
-    required String currentPassword,
+    String? code,
+    String? currentPassword,
     required String newPassword,
   }) async {
     if (AppConfig.useMockData) {
@@ -316,9 +342,26 @@ class AppProvider extends ChangeNotifier {
     }
     try {
       await _authService.changePassword(
+        code: code,
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// POST /auth/change-password/request-otp — ✅ جديد
+  Future<bool> requestChangePasswordOtp() async {
+    if (AppConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      return true;
+    }
+    try {
+      await _authService.requestChangePasswordOtp();
       return true;
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -397,20 +440,44 @@ class AppProvider extends ChangeNotifier {
   /// الصفحة الرئيسية (showLocationPickerSheet)، وشاشة "تغيير الموقع" في
   /// الإعدادات. لا يزال بالإمكان تمرير [area] فقط عند التأكد أنها تنتمي إلى
   /// [block] الحالية (مثال نادر)، لكن الاستخدام الطبيعي دائماً يمرّر الاثنين.
+  ///
+  /// ✅ [locationId] هو المعرّف الحقيقي للحي المختار (يُحسَب في الشاشة عبر
+  /// CatalogProvider.locationIdForArea). عند تمريره يُحفَظ محلياً ويُرسَل
+  /// للخادم عبر PUT /auth/profile حتى يبقى موقع الحساب متزامناً مع الاختيار
+  /// المحلي. الشاشات التي لم تُمرّره بعد تبقى تعمل كما هي تماماً.
   Future<void> updateLocation({
     required String block,
     required String area,
+    String? locationId,
   }) async {
     _userBlock = block;
     _userLocation = area;
+    if (locationId != null && locationId.isNotEmpty) {
+      _selectedLocationId = locationId;
+    }
     notifyListeners();
     await _persistLocation();
+
+    // مزامنة صامتة مع الخادم: فشلها لا يجب أن يمنع تغيير الموقع محلياً.
+    if (!AppConfig.useMockData &&
+        isLoggedIn &&
+        locationId != null &&
+        locationId.isNotEmpty) {
+      try {
+        await _authService.updateProfile(locationId: locationId);
+      } on ApiException {
+        // نتجاهله عمداً — الاختيار المحلي هو ما يقود واجهة المستخدم.
+      }
+    }
   }
 
   Future<void> _persistLocation() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_block', _userBlock);
     await prefs.setString('user_area', _userLocation);
+    if (_selectedLocationId != null) {
+      await prefs.setString('selected_location_id', _selectedLocationId!);
+    }
   }
 
   void clearError() {
@@ -439,6 +506,11 @@ class AppProvider extends ChangeNotifier {
         _userBlock = parts[0].trim();
         _userLocation = parts.sublist(1).join(' - ').trim();
       }
+    }
+    // ✅ الموقع المختار يتبع موقع الحساب القادم من الخادم، إلا إذا كان
+    // المستخدم قد اختار موقعاً آخر محلياً في هذه الجلسة (فيبقى اختياره).
+    if (user.locationId != null && user.locationId!.isNotEmpty) {
+      _selectedLocationId ??= user.locationId;
     }
     _isAdmin = isAdmin;
     _currentUser = user;
@@ -475,24 +547,62 @@ class ProductProvider extends ChangeNotifier {
   int _currentPage = 1;
   String? _search;
   String? _category;
+  String? _locationId;
+  /// ✅ إجمالي المنتجات في الخادم (من pagination.total)، لا عدد ما
+  /// حُمِّل محلياً — تعرضه الصفحة الرئيسية كـ"منتجات مراقبة".
+  int _totalProducts = 0;
 
   LoadingState get state => _state;
   List<ProductModel> get products => _products;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _state == LoadingState.loading;
   bool get hasNextPage => _hasNextPage;
+  int get totalProducts =>
+      _totalProducts > 0 ? _totalProducts : _products.length;
 
+  /// ✅ التصنيفات الفعلية القادمة من الخادم، مسبوقة دائماً بخيار "الكل".
+  List<String> _categories = const ['الكل'];
+  List<String> get categories => _categories;
+
+  Future<void> loadCategories() async {
+    if (AppConfig.useMockData) {
+      _categories = [
+        'الكل',
+        ...{for (final p in MockData.products) p.category},
+      ];
+      notifyListeners();
+      return;
+    }
+    try {
+      final fetched = await _service.getCategories();
+      _categories = ['الكل', ...fetched];
+      notifyListeners();
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+    }
+  }
+
+  /// ✅ [locationId] معرّف الحي المختار — يُمرَّر من الشاشات عبر
+  /// AppProvider.selectedLocationId حتى تعكس الأسعار السوقية المعروضة
+  /// (real_price / avg_price / change_percent) متاجر ذلك الحي فقط. تغييره
+  /// يُعيد تحميل القائمة من الصفحة الأولى تماماً كتغيير التصنيف أو البحث.
   Future<void> loadProducts({
     String? category,
     String? search,
+    String? locationId,
     bool refresh = false,
   }) async {
-    if (refresh || category != _category || search != _search) {
+    if (refresh ||
+        category != _category ||
+        search != _search ||
+        locationId != _locationId) {
       _products = [];
       _currentPage = 1;
     }
     _category = category;
     _search = search;
+    _locationId = locationId;
     _state = LoadingState.loading;
     notifyListeners();
 
@@ -502,6 +612,7 @@ class ProductProvider extends ChangeNotifier {
       _products = category == null || category == 'الكل'
           ? MockData.products
           : MockData.products.where((p) => p.category == category).toList();
+      _totalProducts = _products.length;
       _hasNextPage = false;
       _state = LoadingState.success;
       notifyListeners();
@@ -513,9 +624,11 @@ class ProductProvider extends ChangeNotifier {
       final response = await _service.getProducts(
         search: search,
         category: category,
+        locationId: locationId,
         page: _currentPage,
       );
       _products = [..._products, ...?response.data];
+      _totalProducts = response.pagination?.total ?? _products.length;
       _hasNextPage = response.pagination?.hasNextPage ?? false;
       _currentPage++;
       _state = LoadingState.success;

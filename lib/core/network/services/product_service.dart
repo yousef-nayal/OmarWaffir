@@ -8,9 +8,12 @@ class ProductService {
   ProductService({ApiClient? api}) : _api = api ?? ApiClient();
 
   /// GET /products?search=&category=&page=&per_page=
+  /// ✅ [locationId] يجعل الأسعار السوقية المحسوبة (real/avg/change) خاصة
+  /// بالحي المختار: الخادم يقصر تجميع الأسعار على متاجر ذلك الموقع.
   Future<ApiResponse<List<ProductModel>>> getProducts({
     String? search,
     String? category,
+    String? locationId,
     int page = 1,
     int perPage = 20,
   }) {
@@ -19,6 +22,8 @@ class ProductService {
       queryParameters: {
         if (search != null && search.isNotEmpty) 'search': search,
         if (category != null && category.isNotEmpty) 'category': category,
+        if (locationId != null && locationId.isNotEmpty)
+          'location_id': locationId,
         'page': page,
         'per_page': perPage,
       },
@@ -29,10 +34,27 @@ class ProductService {
     );
   }
 
+  /// GET /products/categories — ✅ جديد — التصنيفات الفعلية الموجودة في
+  /// قاعدة البيانات، بدل قائمة ثابتة في الكود قد لا تطابق أي تصنيف حقيقي
+  /// فتُرجع الفلترة نتائج فارغة دائماً.
+  Future<List<String>> getCategories() {
+    return _api.get<List<String>>(
+      '/products/categories',
+      fromJson: (json) {
+        final list = (json as Map<String, dynamic>)['data'] as List? ?? [];
+        return list.map((e) => e.toString()).toList();
+      },
+    );
+  }
+
   /// GET /products/{id}
-  Future<ProductModel> getProductById(String id) {
+  Future<ProductModel> getProductById(String id, {String? locationId}) {
     return _api.get<ProductModel>(
       '/products/$id',
+      queryParameters: {
+        if (locationId != null && locationId.isNotEmpty)
+          'location_id': locationId,
+      },
       fromJson: (json) =>
           ProductModel.fromJson((json as Map<String, dynamic>)['data'] ?? json),
     );

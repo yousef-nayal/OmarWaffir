@@ -23,7 +23,15 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final productProvider = context.read<ProductProvider>();
       final catalogProvider = context.read<CatalogProvider>();
-      if (productProvider.products.isEmpty) productProvider.loadProducts();
+      final appProvider = context.read<AppProvider>();
+      // ✅ قائمة المواقع الحقيقية لازمة لترجمة الحي المختار إلى location_id
+      // قبل أي استعلام حسّاس للموقع.
+      if (catalogProvider.locations.isEmpty) catalogProvider.loadLocations();
+      if (productProvider.products.isEmpty) {
+        productProvider.loadProducts(
+          locationId: appProvider.selectedLocationId,
+        );
+      }
       if (catalogProvider.recentActivity.isEmpty) {
         catalogProvider.loadRecentActivity();
       }
@@ -169,26 +177,52 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 14)),
                       const SizedBox(height: 20),
-                      // Stats row
-                      const Row(children: [
-                        _StatChip(
-                            value: '16',
-                            label: 'أسعار معقولة',
-                            icon: Icons.check_circle_outline,
-                            accentColor: AppColors.success),
-                        SizedBox(width: 10),
-                        _StatChip(
-                            value: '8',
-                            label: 'أسعار مرتفعة',
-                            icon: Icons.trending_up,
-                            accentColor: AppColors.error),
-                        SizedBox(width: 10),
-                        _StatChip(
-                            value: '24',
-                            label: 'منتجات مراقبة',
-                            icon: Icons.bar_chart,
-                            accentColor: Colors.white),
-                      ]),
+                      // ══════════════════════════════════════════════════
+                      // ✅ إصلاح جوهري — كانت هذه الأرقام الثلاثة ثابتة في
+                      // الكود ('16'، '8'، '24')، فتُعرض كما هي حتى بعد ربط
+                      // الـ backend الحقيقي، أي بيانات عمل وهمية على شاشة
+                      // إنتاجية. أصبحت الآن محسوبة من المنتجات المُحمَّلة
+                      // فعلياً من الخادم للموقع المختار:
+                      //   • أسعار معقولة  = السعر السوقي ≤ السعر الرسمي
+                      //   • أسعار مرتفعة  = السعر السوقي > السعر الرسمي
+                      //   • منتجات مراقبة = إجمالي المنتجات في الخادم
+                      // المنتجات التي لا تملك أي سعر سوقي بعد (real = 0) لا
+                      // تُحتسَب ضمن "معقولة" أو "مرتفعة" لأنها ببساطة بلا
+                      // بيانات سوق، لا رخيصة ولا غالية.
+                      // ══════════════════════════════════════════════════
+                      Builder(builder: (context) {
+                        final products =
+                            context.watch<ProductProvider>().products;
+                        final priced = products
+                            .where((p) => p.realPrice > 0 && p.officialPrice > 0)
+                            .toList();
+                        final high = priced
+                            .where((p) => p.realPrice > p.officialPrice)
+                            .length;
+                        final fair = priced.length - high;
+                        final monitored =
+                            context.watch<ProductProvider>().totalProducts;
+
+                        return Row(children: [
+                          _StatChip(
+                              value: '$fair',
+                              label: 'أسعار معقولة',
+                              icon: Icons.check_circle_outline,
+                              accentColor: AppColors.success),
+                          const SizedBox(width: 10),
+                          _StatChip(
+                              value: '$high',
+                              label: 'أسعار مرتفعة',
+                              icon: Icons.trending_up,
+                              accentColor: AppColors.error),
+                          const SizedBox(width: 10),
+                          _StatChip(
+                              value: '$monitored',
+                              label: 'منتجات مراقبة',
+                              icon: Icons.bar_chart,
+                              accentColor: Colors.white),
+                        ]);
+                      }),
                     ],
                   ),
                 ),
@@ -343,15 +377,31 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ✅ محدَّث — يمرر الكتلة والمنطقة الحاليتين، ويستقبل الاثنين معاً عند
-  // الاختيار عبر updateLocation(block, area).
+  // ✅ محدَّث — بعد اختيار الحي نترجمه إلى location_id حقيقي عبر
+  // CatalogProvider (المواقع المحمَّلة من الخادم)، نحفظه، ثم نُعيد تحميل
+  // المنتجات به حتى تعكس الأسعار السوقية المعروضة الحي الجديد فعلياً.
   void _showLocationPicker(BuildContext context, AppProvider provider) {
     showLocationPickerSheet(
       context,
       currentBlock: provider.userBlock,
       currentArea: provider.userLocation,
-      onSelect: (block, area) =>
-          provider.updateLocation(block: block, area: area),
+      onSelect: (block, area) async {
+        final catalogProvider = context.read<CatalogProvider>();
+        if (catalogProvider.locations.isEmpty) {
+          await catalogProvider.loadLocations();
+        }
+        final locationId = catalogProvider.locationIdForArea(area);
+        await provider.updateLocation(
+          block: block,
+          area: area,
+          locationId: locationId,
+        );
+        if (!context.mounted) return;
+        await context.read<ProductProvider>().loadProducts(
+              locationId: provider.selectedLocationId,
+              refresh: true,
+            );
+      },
     );
   }
 

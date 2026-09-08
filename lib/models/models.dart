@@ -13,6 +13,14 @@ class UserModel {
   // ══════════════════════════════════════════════════════════════════════
   final int roleLevel;
   final String location;
+  // ══════════════════════════════════════════════════════════════════════
+  // ✅ جديد — المعرّف الحقيقي لصف الموقع (locations.id) الذي يشير إليه عمود
+  // users.location_id في قاعدة البيانات. الحقل النصي [location] أعلاه يبقى
+  // للعرض فقط ("الكتلة الخامسة - الفرقان")، بينما هذا المعرّف هو ما يُرسَل
+  // ويُستقبَل فعلياً من الخادم. بدونه كان التطبيق يضطر لمطابقة الأحياء
+  // بالاسم، وهي مطابقة هشّة تكسر عند أي اختلاف إملائي.
+  // ══════════════════════════════════════════════════════════════════════
+  final String? locationId;
   final int pricesCount;
   final int ratingsCount;
   final int reportsCount;
@@ -33,6 +41,7 @@ class UserModel {
     this.role = 'user',
     this.roleLevel = 0,
     this.location = '',
+    this.locationId,
     this.pricesCount = 0,
     this.ratingsCount = 0,
     this.reportsCount = 0,
@@ -48,6 +57,9 @@ class UserModel {
       role: _parseRole(json['role']),
       roleLevel: _parseRoleLevel(json['role']),
       location: json['location'] as String? ?? '',
+      locationId: json['location_id'] != null
+          ? json['location_id'].toString()
+          : null,
       pricesCount: json['prices_count'] as int? ?? 0,
       ratingsCount: json['ratings_count'] as int? ?? 0,
       reportsCount: json['reports_count'] as int? ?? 0,
@@ -134,6 +146,7 @@ class UserModel {
         'phone_number': phone,
         'role': role,
         'location': location,
+        if (locationId != null) 'location_id': locationId,
         'prices_count': pricesCount,
         'ratings_count': ratingsCount,
         'reports_count': reportsCount,
@@ -148,6 +161,7 @@ class UserModel {
     String? role,
     int? roleLevel,
     String? location,
+    String? locationId,
     int? pricesCount,
     int? ratingsCount,
     int? reportsCount,
@@ -161,6 +175,7 @@ class UserModel {
       role: role ?? this.role,
       roleLevel: roleLevel ?? this.roleLevel,
       location: location ?? this.location,
+      locationId: locationId ?? this.locationId,
       pricesCount: pricesCount ?? this.pricesCount,
       ratingsCount: ratingsCount ?? this.ratingsCount,
       reportsCount: reportsCount ?? this.reportsCount,
@@ -178,6 +193,10 @@ class ProductModel {
   final double realPrice;
   final double avgPrice;
   final String unit;
+  /// ✅ جديد — معرّف الوحدة وكميتها كما يحسبهما الخادم من السعر الرسمي
+  /// الحالي، ليتمكن نموذج "إضافة سعر" من اختيار نفس الوحدة تلقائياً.
+  final String? unitId;
+  final double amount;
   final int pricesCount;
   final double changePercent;
   final bool isPriceUp;
@@ -190,6 +209,8 @@ class ProductModel {
     required this.realPrice,
     required this.avgPrice,
     required this.unit,
+    this.unitId,
+    this.amount = 1,
     required this.pricesCount,
     required this.changePercent,
     required this.isPriceUp,
@@ -204,6 +225,8 @@ class ProductModel {
       realPrice: _toDouble(json['real_price']),
       avgPrice: _toDouble(json['avg_price']),
       unit: json['unit'] as String? ?? 'كغ',
+      unitId: json['unit_id'] != null ? json['unit_id'].toString() : null,
+      amount: json['amount'] != null ? _toDouble(json['amount']) : 1,
       pricesCount: json['prices_count'] as int? ?? 0,
       changePercent: _toDouble(json['change_percent']),
       isPriceUp: json['is_price_up'] as bool? ?? true,
@@ -218,6 +241,8 @@ class ProductModel {
         'real_price': realPrice,
         'avg_price': avgPrice,
         'unit': unit,
+        if (unitId != null) 'unit_id': unitId,
+        'amount': amount,
         'prices_count': pricesCount,
         'change_percent': changePercent,
         'is_price_up': isPriceUp,
@@ -236,6 +261,15 @@ class StoreModel {
   final String id;
   final String name;
   final String address;
+  // ══════════════════════════════════════════════════════════════════════
+  // ✅ جديد — المعرّفان الحقيقيان اللذان يربطان المتجر بموقعه في قاعدة
+  // البيانات: stores.location_id (إلزامي) وlocations.sector_id المشتق منه.
+  // كان الموديل سابقاً يحتفظ بالاسمين النصيين فقط (area/sector)، فيفقد
+  // المعرّف فور القراءة ولا يستطيع أي شاشة تعديل المتجر أو فلترته بالمعرّف.
+  // ══════════════════════════════════════════════════════════════════════
+  final String? locationId;
+  final String? sectorId;
+  /// اسم الحي — الحقل الرسمي في الخادم اسمه district، وarea اسم عرض فقط.
   final String area;
   final String sector;
   final bool isVerified;
@@ -245,6 +279,8 @@ class StoreModel {
     required this.id,
     required this.name,
     required this.address,
+    this.locationId,
+    this.sectorId,
     required this.area,
     required this.sector,
     this.isVerified = false,
@@ -256,7 +292,15 @@ class StoreModel {
       id: (json['id'] ?? '').toString(),
       name: json['name'] as String? ?? '',
       address: json['address'] as String? ?? '',
-      area: json['area'] as String? ?? json['district'] as String? ?? '',
+      locationId: json['location_id'] != null
+          ? json['location_id'].toString()
+          : null,
+      sectorId: json['sector_id'] != null
+          ? json['sector_id'].toString()
+          : (json['sector'] is Map
+              ? (json['sector']['id'] ?? '').toString()
+              : null),
+      area: json['district'] as String? ?? json['area'] as String? ?? json['district'] as String? ?? '',
       sector: json['sector'] is Map
           ? json['sector']['name'] as String? ?? ''
           : json['sector'] as String? ?? '',
@@ -269,6 +313,9 @@ class StoreModel {
         'id': id,
         'name': name,
         'address': address,
+        if (locationId != null) 'location_id': locationId,
+        if (sectorId != null) 'sector_id': sectorId,
+        'district': area,
         'area': area,
         'sector': sector,
         'is_verified': isVerified,
@@ -279,6 +326,8 @@ class StoreModel {
     String? id,
     String? name,
     String? address,
+    String? locationId,
+    String? sectorId,
     String? area,
     String? sector,
     bool? isVerified,
@@ -288,6 +337,8 @@ class StoreModel {
       id: id ?? this.id,
       name: name ?? this.name,
       address: address ?? this.address,
+      locationId: locationId ?? this.locationId,
+      sectorId: sectorId ?? this.sectorId,
       area: area ?? this.area,
       sector: sector ?? this.sector,
       isVerified: isVerified ?? this.isVerified,
