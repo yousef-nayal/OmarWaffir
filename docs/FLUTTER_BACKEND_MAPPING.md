@@ -1,3 +1,7 @@
+> **SUPERSEDED by [`FINAL_API_CONTRACT.md`](FINAL_API_CONTRACT.md).** The
+> mapping below predates the implementation; where the two differ, the contract
+> is correct.
+
 # Flutter to Backend Mapping
 
 This mapping reflects actual current code paths. Mock mode may bypass the service and use `MockData`; an API failure is not automatically converted to mock data.

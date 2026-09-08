@@ -1,3 +1,7 @@
+> **CLOSED — every question here has been answered by the implementation.**
+> See [`FINAL_API_CONTRACT.md`](FINAL_API_CONTRACT.md) for the decisions and
+> [`IMPLEMENTATION_AUDIT.md`](IMPLEMENTATION_AUDIT.md) for the reasoning.
+
 # Backend Open Questions
 
 These items cannot be resolved from the current Flutter code and supplied API documentation without inventing backend behavior.

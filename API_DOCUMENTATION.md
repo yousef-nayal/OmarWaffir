@@ -1,3 +1,17 @@
+> **⚠️ SUPERSEDED — read [`docs/FINAL_API_CONTRACT.md`](docs/FINAL_API_CONTRACT.md) instead.**
+>
+> This file described the API before the backend existed and contains known
+> contradictions (registration tokens, the refresh envelope, a price `status`
+> field, `area` vs `district`). The backend now implements the final contract,
+> and the app no longer runs on mock data by default.
+>
+> Machine-readable versions: [`docs/openapi.yaml`](docs/openapi.yaml),
+> [`docs/waffir.postman_collection.json`](docs/waffir.postman_collection.json).
+>
+> Kept for historical reference only.
+
+---
+
 # توثيق API — تطبيق وفّر (Waffir)
 
 هذا المستند هو المرجع الوحيد الذي يحتاجه مطوّر الـ backend لبناء الـ API الذي

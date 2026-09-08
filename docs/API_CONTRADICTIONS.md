@@ -1,3 +1,10 @@
+> **RESOLVED — superseded by [`FINAL_API_CONTRACT.md`](FINAL_API_CONTRACT.md).**
+>
+> Every contradiction listed below was decided and implemented. The resolutions
+> are summarised in [`IMPLEMENTATION_AUDIT.md`](IMPLEMENTATION_AUDIT.md) section 4
+> and are covered by the backend test suite. This file is kept only as a record
+> of what the disagreements were; do not build against it.
+
 # API Contradictions
 
 Each item compares the current Flutter implementation with `API_DOCUMENTATION.md` and model/provider behavior.

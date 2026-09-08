@@ -1,3 +1,6 @@
+> **SUPERSEDED by [`FINAL_API_CONTRACT.md`](FINAL_API_CONTRACT.md)**, which is
+> the contract the running backend and its tests implement.
+
 # Generated Backend Contract
 
 Status vocabulary used in this document:

@@ -1,3 +1,7 @@
+> **OUTDATED — superseded by [`FINAL_API_CONTRACT.md`](FINAL_API_CONTRACT.md)**
+> and [`openapi.yaml`](openapi.yaml). The endpoint list that actually exists can
+> be printed at any time with `php artisan route:list` inside `backend/`.
+
 # API Endpoint Matrix
 
 All paths are relative to the configured `API_BASE_URL`. Classification is based on the current Dart code and supplied API documentation.

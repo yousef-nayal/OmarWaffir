@@ -1,3 +1,7 @@
+> **SUPERSEDED — the implemented schema is in `backend/database/migrations/`**
+> and is described in [`IMPLEMENTATION_REPORT.md`](IMPLEMENTATION_REPORT.md)
+> section 2. This file records the requirements that led to it.
+
 # Database Requirements
 
 This document separates requirements observed from the Flutter client from backend recommendations. It is not a generated migration and does not assert that every inferred relationship must be implemented unchanged.

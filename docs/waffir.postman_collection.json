@@ -1,0 +1,2909 @@
+{
+    "info": {
+        "name": "Waffir API v1",
+        "description": "Generated from the Laravel route table by scripts/generate-postman.php.\n\nSet {{base_url}} to your backend, then run \"POST /auth/login\" - the token variables\nfill themselves in from the response.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000/api/v1"
+        },
+        {
+            "key": "access_token",
+            "value": ""
+        },
+        {
+            "key": "refresh_token",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Admin",
+            "item": [
+                {
+                    "name": "DELETE /admin/users/{user}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/users/{user}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "users",
+                                ":user"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /admin/dashboard-stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/dashboard-stats",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "dashboard-stats"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /admin/recent-activity",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/recent-activity",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "recent-activity"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /admin/users",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/users",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "users"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sector_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "location_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "role",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PATCH /admin/users/{user}/block",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/users/{user}/block",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "users",
+                                ":user",
+                                "block"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PATCH /admin/users/{user}/role",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/users/{user}/role",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "users",
+                                ":user",
+                                "role"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"role\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 2."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PATCH /admin/users/{user}/unblock",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/users/{user}/unblock",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "users",
+                                ":user",
+                                "unblock"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /admin/users",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/users",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "users"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"مستخدم من الإدارة\",\n    \"phone_number\": \"0995550000\",\n    \"password\": \"Password123!\",\n    \"location_id\": \"18\",\n    \"role\": 0\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /admin/users/{user}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/admin/users/{user}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "admin",
+                                "users",
+                                ":user"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"اسم معدّل\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "GET /auth/me",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/me",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "me"
+                            ]
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /auth/admin/login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/admin/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "admin",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"admin@waffir.local\",\n    \"password\": \"Password123!\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const body = pm.response.json();",
+                                    "if (body && body.data && body.data.access_token) {",
+                                    "    pm.collectionVariables.set('access_token', body.data.access_token);",
+                                    "    pm.collectionVariables.set('refresh_token', body.data.refresh_token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "POST /auth/change-password/request-otp",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/change-password/request-otp",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "change-password",
+                                "request-otp"
+                            ]
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /auth/forgot-password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/forgot-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "forgot-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone_number\": \"0990000001\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /auth/login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone_number\": \"0990000001\",\n    \"password\": \"Password123!\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const body = pm.response.json();",
+                                    "if (body && body.data && body.data.access_token) {",
+                                    "    pm.collectionVariables.set('access_token', body.data.access_token);",
+                                    "    pm.collectionVariables.set('refresh_token', body.data.refresh_token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "POST /auth/logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "logout"
+                            ]
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /auth/refresh",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/refresh",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "refresh"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const body = pm.response.json();",
+                                    "if (body && body.data && body.data.access_token) {",
+                                    "    pm.collectionVariables.set('access_token', body.data.access_token);",
+                                    "    pm.collectionVariables.set('refresh_token', body.data.refresh_token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "POST /auth/register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"مستخدم تجريبي\",\n    \"phone_number\": \"0991112233\",\n    \"password\": \"Password123!\",\n    \"password_confirmation\": \"Password123!\",\n    \"location_id\": \"18\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /auth/resend-otp",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/resend-otp",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "resend-otp"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone_number\": \"0991112233\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /auth/verify-otp",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/verify-otp",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "verify-otp"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone_number\": \"0991112233\",\n    \"code\": \"123456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const body = pm.response.json();",
+                                    "if (body && body.data && body.data.access_token) {",
+                                    "    pm.collectionVariables.set('access_token', body.data.access_token);",
+                                    "    pm.collectionVariables.set('refresh_token', body.data.refresh_token);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "PUT /auth/change-password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/change-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "change-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"123456\",\n    \"new_password\": \"Password123!\",\n    \"new_password_confirmation\": \"Password123!\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /auth/profile",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/profile",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "profile"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"اسم جديد\",\n    \"location_id\": \"18\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /auth/reset-password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/auth/reset-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "reset-password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"phone_number\": \"0990000001\",\n    \"code\": \"123456\",\n    \"new_password\": \"Password123!\",\n    \"new_password_confirmation\": \"Password123!\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Catalog",
+            "item": [
+                {
+                    "name": "DELETE /brands/{brand}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/brands/{brand}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "brands",
+                                ":brand"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "DELETE /locations/{location}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/locations/{location}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "locations",
+                                ":location"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "DELETE /sectors/{sector}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/sectors/{sector}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "sectors",
+                                ":sector"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "DELETE /units/{unit}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/units/{unit}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "units",
+                                ":unit"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /brands",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/brands",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "brands"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /locations",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/locations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "locations"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sector_id",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /sectors",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/sectors",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "sectors"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /units",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/units",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "units"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /brands",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/brands",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "brands"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"علامة جديدة\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /locations",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/locations",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "locations"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"sector_id\": \"1\",\n    \"district\": \"حي جديد\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /sectors",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/sectors",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "sectors"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"كتلة جديدة\",\n    \"description\": \"وصف\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /units",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/units",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "units"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"وحدة جديدة\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /brands/{brand}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/brands/{brand}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "brands",
+                                ":brand"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"علامة معدّلة\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /locations/{location}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/locations/{location}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "locations",
+                                ":location"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"sector_id\": \"1\",\n    \"district\": \"حي معدّل\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /sectors/{sector}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/sectors/{sector}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "sectors",
+                                ":sector"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"كتلة معدّلة\",\n    \"description\": \"وصف\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /units/{unit}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/units/{unit}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "units",
+                                ":unit"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"وحدة معدّلة\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Health",
+            "item": [
+                {
+                    "name": "GET /health",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/health",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "health"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Notifications",
+            "item": [
+                {
+                    "name": "GET /notifications",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications"
+                            ],
+                            "query": [
+                                {
+                                    "key": "unread",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /notifications/unread-count",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications/unread-count",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications",
+                                "unread-count"
+                            ]
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PATCH /notifications/read-all",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications/read-all",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications",
+                                "read-all"
+                            ]
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PATCH /notifications/{id}/read",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/notifications/{id}/read",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "notifications",
+                                ":id",
+                                "read"
+                            ]
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Official prices",
+            "item": [
+                {
+                    "name": "DELETE /official-prices/{officialPrice}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/official-prices/{officialPrice}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "official-prices",
+                                ":officialPrice"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /official-prices",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/official-prices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "official-prices"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "product_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /official-prices/{officialPrice}/history",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/official-prices/{officialPrice}/history",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "official-prices",
+                                ":officialPrice",
+                                "history"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /official-prices",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/official-prices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "official-prices"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"product_id\": \"1\",\n    \"unit_id\": \"1\",\n    \"amount\": 1,\n    \"price\": 110\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /official-prices/{officialPrice}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/official-prices/{officialPrice}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "official-prices",
+                                ":officialPrice"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"product_id\": \"1\",\n    \"unit_id\": \"1\",\n    \"amount\": 1,\n    \"price\": 125\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Prices",
+            "item": [
+                {
+                    "name": "DELETE /prices/{price}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/prices/{price}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "prices",
+                                ":price"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /prices",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/prices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "prices"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "user_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "product_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "store_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sector_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "location_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "brand_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /prices",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/prices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "prices"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"product_id\": \"1\",\n    \"store_id\": \"1\",\n    \"unit_id\": \"1\",\n    \"brand_id\": \"1\",\n    \"amount\": 1,\n    \"price\": 120\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /prices/{price}/vote",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/prices/{price}/vote",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "prices",
+                                ":price",
+                                "vote"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"is_up\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Products",
+            "item": [
+                {
+                    "name": "DELETE /products/{product}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/products/{product}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "products",
+                                ":product"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /products",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/products",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "products"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "location_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /products/categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/products/categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "products",
+                                "categories"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /products/{product}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/products/{product}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "products",
+                                ":product"
+                            ],
+                            "query": [
+                                {
+                                    "key": "location_id",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /products/{product}/prices",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/products/{product}/prices",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "products",
+                                ":product",
+                                "prices"
+                            ],
+                            "query": [
+                                {
+                                    "key": "location_id",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /products",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/products",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "products"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"منتج جديد\",\n    \"category\": \"حبوب ومطاحن\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /products/{product}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/products/{product}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "products",
+                                ":product"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"اسم معدّل\",\n    \"category\": \"حبوب ومطاحن\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Reports",
+            "item": [
+                {
+                    "name": "DELETE /reports/{report}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/reports/{report}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "reports",
+                                ":report"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /reports",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/reports",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "reports"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "user_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "product_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "store_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sector_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "location_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /reports",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/reports",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "reports"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"price_id\": \"1\",\n    \"type\": \"سعر مبالغ فيه\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Stores",
+            "item": [
+                {
+                    "name": "DELETE /stores/{store}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/stores/{store}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "stores",
+                                ":store"
+                            ]
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /stores",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/stores",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "stores"
+                            ],
+                            "query": [
+                                {
+                                    "key": "search",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "sector_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "location_id",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "is_verified",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /stores/{store}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/stores/{store}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "stores",
+                                ":store"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "description": "Public."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PATCH /stores/{store}/verify",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/stores/{store}/verify",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "stores",
+                                ":store",
+                                "verify"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"is_verified\": true\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /stores",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/stores",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "stores"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"location_id\": \"18\",\n    \"name\": \"متجر جديد\",\n    \"address\": \"شارع رئيسي\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires a signed-in user."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "PUT /stores/{store}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/stores/{store}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "stores",
+                                ":store"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"متجر معدّل\",\n    \"address\": \"شارع آخر\",\n    \"location_id\": \"18\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Requires role >= 1."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}
