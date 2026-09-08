@@ -769,3 +769,58 @@ class SectorModel {
         description: json['description'] as String? ?? '',
       );
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ✅ جديد — إشعار داخل التطبيق (GET /notifications).
+//
+// المصدر الحقيقي الوحيد لإشعارات المستخدم العادي. سابقاً كانت الصفحة الرئيسية
+// تعرض بدلاً منه نتيجة GET /admin/recent-activity، وهو مسار إداري يعود بـ 403
+// لأي مستخدم عادي — فكانت قائمة الإشعارات فارغة دائماً في التطبيق الحقيقي.
+// ══════════════════════════════════════════════════════════════════════════════
+class AppNotification {
+  final String id;
+
+  /// نوع الحدث، مثال: official_price
+  final String type;
+  final String title;
+  final String body;
+  final String? productId;
+  final bool isRead;
+  final DateTime createdAt;
+
+  AppNotification({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.body,
+    this.productId,
+    this.isRead = false,
+    required this.createdAt,
+  });
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    return AppNotification(
+      id: (json['id'] ?? '').toString(),
+      type: json['type'] as String? ?? 'general',
+      title: json['title'] as String? ?? '',
+      body: json['body'] as String? ?? '',
+      productId: json['product_id'] != null
+          ? json['product_id'].toString()
+          : null,
+      isRead: json['is_read'] as bool? ?? false,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+    );
+  }
+
+  /// نص زمني مختصر بالعربية للعرض تحت نص الإشعار ("منذ ٣ ساعات").
+  String get relativeTime {
+    final diff = DateTime.now().difference(createdAt.toLocal());
+    if (diff.inMinutes < 1) return 'الآن';
+    if (diff.inMinutes < 60) return 'منذ ${diff.inMinutes} دقيقة';
+    if (diff.inHours < 24) return 'منذ ${diff.inHours} ساعة';
+    if (diff.inDays < 30) return 'منذ ${diff.inDays} يوم';
+    return 'منذ ${(diff.inDays / 30).floor()} شهر';
+  }
+}

@@ -32,9 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
           locationId: appProvider.selectedLocationId,
         );
       }
-      if (catalogProvider.recentActivity.isEmpty) {
-        catalogProvider.loadRecentActivity();
-      }
+      // ✅ إصلاح — كانت الشاشة تُحمّل GET /admin/recent-activity وهو مسار
+      // إداري محمي بـ role:1، فيعود بـ 403 لكل مستخدم عادي وتبقى قائمة
+      // الإشعارات فارغة. الإشعارات الحقيقية للمستخدم لها مسارها الخاص.
+      context.read<NotificationProvider>().load();
     });
   }
 
@@ -43,14 +44,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final provider = context.watch<AppProvider>();
     final isDark = provider.isDarkMode;
     final productProvider = context.watch<ProductProvider>();
-    final catalogProvider = context.watch<CatalogProvider>();
     final gapProducts = productProvider.products.take(5).toList();
-    // ✅ نعرض للمستخدم العادي فقط الأنشطة المتعلقة بالأسعار
-    // (إضافة سعر / تحديث سعر رسمي). أنشطة إدارية مثل البلاغات،
-    // تسجيل مستخدمين جدد، أو طلبات تفعيل متجر تخص المسؤول فقط.
-    final userActivity = catalogProvider.recentActivity
-        .where((a) => a['type'] == 'price' || a['type'] == 'official')
-        .toList();
+    // ✅ إشعارات المستخدم الحقيقية (GET /notifications)، لا سجل النشاط
+    // الإداري الذي كان يُطلب سابقاً ويعود بـ 403.
+    final notifications = context.watch<NotificationProvider>().notifications;
 
     return Scaffold(
       body: CustomScrollView(
@@ -145,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(width: 8),
                               GestureDetector(
                                 onTap: () =>
-                                    _showNotifications(context, userActivity),
+                                    _showNotifications(context, notifications),
                                 child: Container(
                                   width: 36,
                                   height: 36,
@@ -406,7 +403,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showNotifications(
-      BuildContext context, List<Map<String, dynamic>> activity) {
+      BuildContext context, List<AppNotification> notifications) {
+    // فتح القائمة يعني أن المستخدم اطّلع عليها.
+    context.read<NotificationProvider>().markAllRead();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -422,21 +421,21 @@ class _HomeScreenState extends State<HomeScreen> {
               const Text('الإشعارات',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 16),
-              if (activity.isEmpty)
+              if (notifications.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text('لا توجد إشعارات جديدة'),
                 )
               else
-                ...activity.take(3).map((a) => ListTile(
+                ...notifications.take(5).map((n) => ListTile(
                       leading: Icon(
-                          a['type'] == 'price'
-                              ? Icons.attach_money
-                              : Icons.description_outlined,
+                          n.type == 'official_price'
+                              ? Icons.description_outlined
+                              : Icons.attach_money,
                           color: AppColors.primary),
-                      title: Text(a['text']!,
+                      title: Text(n.body,
                           style: const TextStyle(fontSize: 13)),
-                      subtitle: Text(a['time']!,
+                      subtitle: Text(n.relativeTime,
                           style: const TextStyle(
                               fontSize: 11, color: AppColors.textSecondary)),
                     )),

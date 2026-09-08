@@ -17,8 +17,25 @@ import '../../../core/constants/app_routes.dart';
 // أُزيلت من هنا: المساعدة والدعم، عن التطبيق، سياسة الخصوصية، الشروط
 // والأحكام — جميعها أصبحت ضمن شاشة الإعدادات فقط (راجع products_screen.dart).
 // ══════════════════════════════════════════════════════════════════════════
-class ProfileScreen extends StatelessWidget {
+// ✅ تحويل إلى StatefulWidget لسبب واحد: إعادة جلب GET /auth/me عند فتح
+// الشاشة. العدّادات (أسعارك/تقييماتك/بلاغاتك) كانت تُعرض كما كانت لحظة
+// استعادة الجلسة عند إقلاع التطبيق، فتبقى قديمة بعد أي مساهمة جديدة في
+// نفس الجلسة. لا تغيير على أي عنصر في الواجهة.
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppProvider>().refreshCurrentUser();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -39,6 +39,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ReportProvider()),
         ChangeNotifierProvider(create: (_) => CatalogProvider()),
         ChangeNotifierProvider(create: (_) => AdminUsersProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const WaffirApp(),
     ),

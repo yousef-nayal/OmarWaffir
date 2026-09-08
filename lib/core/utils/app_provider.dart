@@ -9,6 +9,7 @@ import 'package:waffir_app/core/network/services/price_service.dart';
 import 'package:waffir_app/core/network/services/report_service.dart';
 import 'package:waffir_app/core/network/services/catalog_service.dart';
 import 'package:waffir_app/core/network/services/admin_user_service.dart';
+import 'package:waffir_app/core/network/services/notification_service.dart';
 import 'package:waffir_app/core/config/app_config.dart';
 import 'package:waffir_app/core/constants/aleppo_blocks.dart';
 import 'mock_data.dart';
@@ -111,6 +112,22 @@ class AppProvider extends ChangeNotifier {
   // ══════════════════════════════════════════════════════════════════════
   // AUTH ACTIONS — النسخة الحقيقية (تُستخدم عندما AppConfig.useMockData = false)
   // ══════════════════════════════════════════════════════════════════════
+
+  /// ✅ جديد — يعيد جلب GET /auth/me لتحديث العدّادات (أسعارك/تقييماتك/
+  /// بلاغاتك) بعد أي مساهمة جديدة. بدونه تبقى الأرقام كما كانت لحظة
+  /// استعادة الجلسة عند إقلاع التطبيق، فتظهر قديمة في الملف الشخصي.
+  Future<void> refreshCurrentUser() async {
+    if (AppConfig.useMockData || !isLoggedIn) return;
+    try {
+      final user = await _authService.getCurrentUser();
+      _currentUser = user;
+      _userName = user.name;
+      _userPhone = user.phone;
+      notifyListeners();
+    } on ApiException {
+      // تحديث صامت: فشله لا يجب أن يُفرغ الشاشة من بياناتها الحالية.
+    }
+  }
 
   /// نقطة الدخول الوحيدة التي تستدعيها شاشات تسجيل الدخول.
   /// تتحول تلقائياً بين البيانات الوهمية والـ backend الحقيقي حسب
@@ -593,10 +610,24 @@ class ProductProvider extends ChangeNotifier {
     String? locationId,
     bool refresh = false,
   }) async {
-    if (refresh ||
-        category != _category ||
+    final filtersChanged = category != _category ||
         search != _search ||
-        locationId != _locationId) {
+        locationId != _locationId;
+
+    // ══════════════════════════════════════════════════════════════════
+    // ✅ إصلاح — الصفحة الرئيسية وشاشة المنتجات كلتاهما ضمن IndexedStack
+    // في UserShell، فيعمل initState لكل منهما عند الإقلاع وتُستدعى هذه
+    // الدالة مرتين في نفس اللحظة. بما أن كلا الطلبين ينطلقان قبل أن
+    // يزيد أيهما _currentPage، كانا يجلبان الصفحة الأولى نفسها ويضيفانها
+    // معاً — فتتضاعف القائمة (٤٠ عنصراً لعشرين منتجاً) وتظهر إحصائيات
+    // الصفحة الرئيسية مضروبة في اثنين. إن كان هناك طلب جارٍ بنفس
+    // الفلاتر، ننتظر نتيجته بدل إطلاق طلب ثانٍ فوقه.
+    // ══════════════════════════════════════════════════════════════════
+    if (_state == LoadingState.loading && !refresh && !filtersChanged) {
+      return;
+    }
+
+    if (refresh || filtersChanged) {
       _products = [];
       _currentPage = 1;
     }
@@ -751,6 +782,8 @@ class StoreProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _hasNextPage = false;
   int _currentPage = 1;
+  String? _sector;
+  String? _search;
 
   LoadingState get state => _state;
   List<StoreModel> get stores => _stores;
@@ -763,10 +796,21 @@ class StoreProvider extends ChangeNotifier {
     String? search,
     bool refresh = false,
   }) async {
-    if (refresh) {
+    final filtersChanged = sector != _sector || search != _search;
+
+    // ✅ نفس إصلاح ProductProvider.loadProducts: شاشة المتاجر وشاشة "إضافة
+    // سعر" تستدعيان هذه الدالة معاً، فكانت الصفحة الأولى تُضاف مرتين
+    // وتظهر المتاجر مكرَّرة في القائمة.
+    if (_state == LoadingState.loading && !refresh && !filtersChanged) {
+      return;
+    }
+
+    if (refresh || filtersChanged) {
       _stores = [];
       _currentPage = 1;
     }
+    _sector = sector;
+    _search = search;
     _state = LoadingState.loading;
     notifyListeners();
 
@@ -2071,6 +2115,55 @@ class AdminUsersProvider extends ChangeNotifier {
       errorMessage = e.message;
       notifyListeners();
       return false;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ✅ جديد — NOTIFICATION PROVIDER
+//
+// إشعارات المستخدم العادي (GET /notifications). كانت الصفحة الرئيسية تقرأ
+// إشعاراتها من CatalogProvider.recentActivity، أي من GET /admin/recent-activity
+// المحمي بـ role:1 — فكان الطلب يفشل بـ 403 لكل مستخدم عادي وتظهر القائمة
+// فارغة دائماً. هذا الـ Provider يستخدم المسار الصحيح المخصص للمستخدم.
+// ══════════════════════════════════════════════════════════════════════════
+class NotificationProvider extends ChangeNotifier {
+  final NotificationService _service;
+  NotificationProvider({NotificationService? service})
+      : _service = service ?? NotificationService();
+
+  List<AppNotification> notifications = [];
+  int unreadCount = 0;
+  bool isLoading = false;
+  String? errorMessage;
+
+  Future<void> load() async {
+    if (AppConfig.useMockData) return;
+    isLoading = true;
+    notifyListeners();
+    try {
+      notifications = await _service.getNotifications();
+      unreadCount = notifications.where((n) => !n.isRead).length;
+      errorMessage = null;
+    } on ApiException catch (e) {
+      errorMessage = e.message;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// يُستدعى عند فتح قائمة الإشعارات: يعلّم الكل كمقروء ويُصفّر العدّاد.
+  Future<void> markAllRead() async {
+    if (AppConfig.useMockData || notifications.isEmpty) return;
+    if (unreadCount == 0) return;
+    try {
+      await _service.markAllRead();
+      unreadCount = 0;
+      notifyListeners();
+    } on ApiException catch (e) {
+      errorMessage = e.message;
+      notifyListeners();
     }
   }
 }

@@ -484,7 +484,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimaryOf(context))),
-                        Text('${product.pricesCount} سعر',
+                        // ✅ إصلاح — كان العدّاد يعرض product.pricesCount،
+                        // وهو عدد الأسعار المحسوبة للحي المختار فقط، فوق
+                        // قائمة تعرض كل الأسعار المسجلة للمنتج في كل
+                        // الأحياء — فيظهر "٢ سعر" فوق سبع بطاقات. الآن
+                        // يعرض عدد البطاقات المعروضة فعلاً.
+                        Text('${priceProvider.entries.length} سعر',
                             style: TextStyle(
                                 color: AppColors.textSecondaryOf(context),
                                 fontSize: 13)),
