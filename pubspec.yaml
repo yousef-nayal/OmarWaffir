@@ -1,0 +1,63 @@
+name: waffir_app
+description: A new Flutter project.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.1.0
+  provider: ^6.1.5+1
+  # go_router محذوف — التطبيق يستخدم Navigator العادي فقط
+  dio: ^5.4.0
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.3.0   # ✅ مضاف لـ dark mode و location persistence
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  # ✅ مضاف — يولّد أيقونة التطبيق تلقائياً لكل المنصات من ملفات
+  # assets/icon/ (راجع قسم flutter_launcher_icons أدناه)
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+  # ══════════════════════════════════════════════════════════════════════
+  # ✅ إصلاح: كان الإدخال السابق "- assets/icon/" (مجلد كامل بشرطة مائلة
+  # في النهاية) يسبب الخطأ:
+  #   "Error: unable to find directory entry in pubspec.yaml"
+  # هذه مشكلة معروفة في أداة بناء Flutter على ويندوز عند تسجيل مجلد كامل
+  # كأصل (asset) بدل ملفات محددة — أداة البناء أحياناً تفشل في مسح محتوى
+  # المجلد رغم وجوده فعلياً على القرص. الحل الموثوق: تسجيل كل ملف بمساره
+  # الكامل صراحة بدل تسجيل المجلد نفسه.
+  # ══════════════════════════════════════════════════════════════════════
+  assets:
+    - assets/icon/icon.png
+    - assets/icon/icon_foreground.png
+
+# ══════════════════════════════════════════════════════════════════════════
+# ✅ إعداد أيقونة التطبيق (شعار "وفّر")
+# بعد وضع icon.png وicon_foreground.png داخل assets/icon/، شغّل الأمرين
+# التاليين من جذر المشروع لتوليد الأيقونة على كل المنصات:
+#   flutter pub get
+#   dart run flutter_launcher_icons
+# ══════════════════════════════════════════════════════════════════════════
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#FFFFFF"
+    theme_color: "#2563EB"
