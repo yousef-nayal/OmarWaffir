@@ -43,3 +43,21 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ── Laravel backend ────────────────────────────────────────────────────────
+/backend/vendor/
+/backend/node_modules/
+/backend/.env
+/backend/.env.backup
+/backend/.phpunit.result.cache
+/backend/storage/*.key
+/backend/storage/pail/
+/backend/storage/framework/cache/data/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/testing/*
+/backend/storage/framework/views/*
+/backend/storage/logs/*
+!/backend/storage/**/.gitignore
+/backend/public/storage
+/backend/public/hot
+/backend/analytics/__pycache__/
