@@ -273,8 +273,29 @@ value.
 `GET /units` → `{ id, name, usage_count }`
 `GET /brands` → `{ id, name, products_count, usage_count }`
 
-A delete that would orphan data returns **409** `لا يمكن الحذف لأن العنصر مستخدم
-في بيانات أخرى`.
+#### Deleting reference data cascades
+
+Deleting a unit, brand, product, store, user, area or block **deletes the
+prices recorded against it** - market submissions, and official prices where
+the row is referenced by one. Ratings and reports follow their price (database
+cascade). Deleting an area also removes the shops recorded in it, because
+`stores.location_id` is not nullable; residents keep their account and only
+lose the link (`users.location_id` becomes null). Deleting a block does the
+same for every area under it. All of it runs in one transaction.
+
+These deletes no longer return **409** for being referenced.
+
+`GET /admin/deletion-impact/{type}/{id}` (admin) reports what a delete would
+take with it, so the confirmation dialog can warn first. `type` is one of
+`unit`, `brand`, `product`, `store`, `user`, `location`, `sector`; an unknown
+type is **422**, an unknown id **404**.
+
+```json
+{ "prices": 12, "official_prices": 2, "stores": 1, "locations": 0, "users": 3 }
+```
+
+The endpoint and the delete share one service, so the numbers shown and the
+rows removed cannot drift apart.
 
 ### 3.4 Products
 
@@ -288,7 +309,11 @@ A delete that would orphan data returns **409** `لا يمكن الحذف لأن
 | PUT | `/products/{id}` | A |
 | DELETE | `/products/{id}` | A |
 
-`GET /products?search=&category=&location_id=&page=&per_page=`
+`GET /products?search=&category=&location_id=&sort=&page=&per_page=`
+
+`search` matches the product name **or** its category. `sort=gap` ranks by
+`real_price - official_price` for the requested location, biggest first; rows
+missing either figure sink to the end. Default order is by name.
 
 ```json
 {
@@ -555,7 +580,7 @@ For a product (optionally restricted to one `location_id`):
 | `انتهت جلستك. يرجى تسجيل الدخول مجدداً` | 401 |
 | `لا تملك صلاحية لتنفيذ هذه العملية` | 403 |
 | `العنصر المطلوب غير موجود` | 404 |
-| `لا يمكن الحذف لأن العنصر مستخدم في بيانات أخرى` | 409 |
+| `لا يمكن الحذف لأن العنصر مستخدم في بيانات أخرى` | 409 (no longer raised by catalogue deletes - see 3.3) |
 | `لا يمكنك تقييم سعر أضفته بنفسك` | Self-vote |
 | `يرجى التحقق من البيانات المدخلة` | Generic 422 |
 

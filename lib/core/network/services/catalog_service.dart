@@ -9,6 +9,19 @@ class CatalogService {
   final ApiClient _api;
   CatalogService({ApiClient? api}) : _api = api ?? ApiClient();
 
+  /// GET /admin/deletion-impact/{type}/{id} — ✅ جديد — ما سيُحذف مع
+  /// هذا العنصر. [type] واحد من: unit، brand، product، store، user،
+  /// location، sector.
+  Future<DeletionImpact> getDeletionImpact(String type, String id) {
+    return _api.get<DeletionImpact>(
+      '/admin/deletion-impact/$type/$id',
+      fromJson: (json) => DeletionImpact.fromJson(
+        ((json as Map<String, dynamic>)['data'] ?? json)
+            as Map<String, dynamic>,
+      ),
+    );
+  }
+
   // ── الأسعار الرسمية ────────────────────────────────────────────────
   Future<List<OfficialPrice>> getOfficialPrices({String? search}) {
     return _api.get<List<OfficialPrice>>(

@@ -8,15 +8,19 @@ use App\Models\ActivityLog;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\DeletionImpactService;
 use App\Support\ApiResponse;
 use App\Support\Msg;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StoreController extends Controller
 {
-    public function __construct(private readonly ActivityLogger $activity)
-    {
+    public function __construct(
+        private readonly ActivityLogger $activity,
+        private readonly DeletionImpactService $impact,
+    ) {
     }
 
     /** GET /stores?search=&sector_id=&location_id=&is_verified=&page=&per_page= */
@@ -177,9 +181,17 @@ class StoreController extends Controller
      *
      * Soft delete so historic prices recorded at this store survive.
      */
+    /**
+     * The shop row is soft deleted; the prices submitted for it are removed.
+     * The app shows that count before confirming, from
+     * GET /admin/deletion-impact/store/{id}.
+     */
     public function destroy(Store $store): JsonResponse
     {
-        $store->delete();
+        DB::transaction(function () use ($store): void {
+            $this->impact->purge('store', $store->id);
+            $store->delete();
+        });
 
         return ApiResponse::action(Msg::DELETED);
     }

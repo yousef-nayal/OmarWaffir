@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\DeletionImpactService;
 use App\Support\ApiResponse;
 use App\Support\Msg;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -22,6 +24,10 @@ use Illuminate\Validation\Rule;
  */
 class AdminUserController extends Controller
 {
+    public function __construct(private readonly DeletionImpactService $impact)
+    {
+    }
+
     /** GET /admin/users */
     public function index(Request $request): JsonResponse
     {
@@ -226,8 +232,13 @@ class AdminUserController extends Controller
             return ApiResponse::fail(Msg::CANNOT_DELETE_LAST_SUPER_ADMIN, 409);
         }
 
-        $user->tokens()->delete();
-        $user->delete();
+        // The prices this person submitted go with the account; the app
+        // warns with that count first (GET /admin/deletion-impact/user/{id}).
+        DB::transaction(function () use ($user): void {
+            $this->impact->purge('user', $user->id);
+            $user->tokens()->delete();
+            $user->delete();
+        });
 
         return ApiResponse::action(Msg::DELETED);
     }

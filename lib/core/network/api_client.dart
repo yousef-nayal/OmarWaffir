@@ -32,8 +32,17 @@ class ApiClient {
 
   // ── Constants ─────────────────────────────────────────────────────────
   // غيّر هذا عند نشر التطبيق، أو مرّره عبر --dart-define=API_BASE_URL=...
+  //
+  // ✅ إصلاح — كان العنوان الافتراضي بلا المسار /api/v1، بينما كل
+  // مسارات الخدمات هنا نسبية ('/auth/login'، '/products'...) وLaravel يسجّل
+  // كل مسارات الـ API تحت apiPrefix: 'api/v1' (راجع
+  // backend/bootstrap/app.php). فكان طلب الدخول يذهب إلى
+  // https://<host>/auth/login بدل https://<host>/api/v1/auth/login.
+  //
+  // ملاحظة للاختبار عبر VS Code dev tunnel: يجب ضبط رؤية المنفذ
+  // على Public، وإلا ردّ النفق نفسه 401 قبل أن يصل الطلب للخادم.
   static const String _baseUrl = String.fromEnvironment('API_BASE_URL',
-      defaultValue: 'https://api.waffir.sy/v1');
+      defaultValue: 'https://vn2fttq5-8000.euw.devtunnels.ms/api/v1');
   static const Duration _timeout = Duration(seconds: 30);
 
   String get baseUrl => _baseUrl;

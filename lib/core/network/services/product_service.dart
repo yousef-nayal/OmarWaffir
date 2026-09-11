@@ -7,13 +7,18 @@ class ProductService {
   final ApiClient _api;
   ProductService({ApiClient? api}) : _api = api ?? ApiClient();
 
-  /// GET /products?search=&category=&page=&per_page=
+  /// GET /products?search=&category=&location_id=&sort=&page=&per_page=
   /// ✅ [locationId] يجعل الأسعار السوقية المحسوبة (real/avg/change) خاصة
   /// بالحي المختار: الخادم يقصر تجميع الأسعار على متاجر ذلك الموقع.
+  /// ✅ [sort] = 'gap' يرتّب تنازلياً حسب (السعر الحقيقي − الرسمي) في
+  /// الموقع المطلوب. الترتيب يتم على الخادم لأن السعرين محسوبان
+  /// هناك (وسيط مع استبعاد الشواذ)، ولأن الترتيب محلياً يرى الصفحة
+  /// المُحمّلة فقط لا كل المنتجات.
   Future<ApiResponse<List<ProductModel>>> getProducts({
     String? search,
     String? category,
     String? locationId,
+    String? sort,
     int page = 1,
     int perPage = 20,
   }) {
@@ -24,6 +29,7 @@ class ProductService {
         if (category != null && category.isNotEmpty) 'category': category,
         if (locationId != null && locationId.isNotEmpty)
           'location_id': locationId,
+        if (sort != null && sort.isNotEmpty) 'sort': sort,
         'page': page,
         'per_page': perPage,
       },

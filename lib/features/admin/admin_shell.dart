@@ -9,6 +9,67 @@ import '../../core/constants/aleppo_blocks.dart';
 import '../../models/models.dart';
 import 'package:provider/provider.dart';
 
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// ✅ جديد — تأكيد حذف يعرض ما سيُحذف مع العنصر.
+//
+// حذف وحدة أو علامة أو منتج أو متجر أو مستخدم أو منطقة أو كتلة يحذف
+// معه كل الأسعار المسجّلة عليه — وهذا إجراء لا يمكن التراجع عنه، فلا يجوز
+// أن يحدث بلا علم المسؤول. الأرقام تأتي من الخادم (GET
+// /admin/deletion-impact/{type}/{id})، وتحسبها نفس الخدمة التي تنفّذ
+// الحذف، فلا يمكن أن يختلف الرقم المعروض عمّا يُحذف فعلاً.
+//
+// إن تعذّر جلب الأرقام (انقطاع مثلاً) تُعرض النافذة بلا تحذير بدل
+// منع المسؤول من الحذف.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+Future<bool> confirmDeleteWithImpact(
+  BuildContext context, {
+  required String type,
+  required String id,
+  required String title,
+  required String message,
+  String confirmText = 'حذف',
+  IconData icon = Icons.delete_outline,
+}) async {
+  final impact = await context.read<CatalogProvider>().deletionImpact(type, id);
+  if (!context.mounted) return false;
+
+  final warning = impact == null ? null : _impactWarning(impact);
+  final confirmed = await showConfirmDialog(
+    context,
+    title: title,
+    message: warning == null ? message : '$message\n\n$warning',
+    confirmText: confirmText,
+    icon: icon,
+  );
+  return confirmed == true;
+}
+
+/// نص التحذير، أو null حين لا يوجد شيء مرتبط بالعنصر أصلاً.
+String? _impactWarning(DeletionImpact impact) {
+  if (impact.isEmpty) return null;
+
+  final parts = <String>[
+    if (impact.prices > 0) '${impact.prices} سعر سوقي',
+    if (impact.officialPrices > 0) '${impact.officialPrices} سعر رسمي',
+    if (impact.stores > 0) '${impact.stores} متجر',
+    // عند حذف منطقة واحدة يكون العدد 1 وهي المنطقة نفسها، فلا داعي
+    // لتكرارها؛ الرقم يعني شيئاً عند حذف كتلة تحتها عدة مناطق.
+    if (impact.locations > 1) '${impact.locations} منطقة',
+  ];
+
+  final buffer = StringBuffer();
+  if (parts.isNotEmpty) {
+    buffer.write('⚠️ سيُحذف نهائياً معه: ${parts.join('، ')}.');
+  }
+  if (impact.users > 0) {
+    if (buffer.isNotEmpty) buffer.write('\n');
+    buffer.write(
+      '${impact.users} مستخدم سيفقد ارتباطه بالمنطقة (يبقى حسابه).',
+    );
+  }
+  return buffer.toString();
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // ADMIN SHELL
 // ✅ إصلاح جوهري شامل لهذا الملف: كانت كل شاشة إدارية (النظرة العامة،
@@ -136,6 +197,53 @@ class _AdminShellState extends State<AdminShell> {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // ✅ جديد — تحديث بيانات الشاشة المعروضة حالياً. كانت كل شاشة
+  // تجلب بياناتها مرة واحدة فقط في initState، ولأن الشاشات تُبنى
+  // مرة واحدة داخل اللوحة، فأي تغيير يحدث على الخادم (أو من جهاز آخر)
+  // لا يظهر إلا بإعادة تشغيل التطبيق. الآن: سحب للأسفل على أي قائمة،
+  // أو زر التحديث في شريط العنوان — والزر ضروري لأن السحب لا يعمل
+  // حين تكون القائمة فارغة (لا يوجد ما يُسحب)، وهي بالضبط الحالة
+  // التي يحتاج فيها المسؤول إعادة الجلب فعلاً.
+  // ═══════════════════════════════════════════════════════════════════════
+  Future<void> _refreshCurrentScreen() async {
+    final catalog = context.read<CatalogProvider>();
+    switch (_selectedIndex) {
+      case 0:
+        await Future.wait([
+          catalog.loadDashboardStats(),
+          catalog.loadRecentActivity(),
+        ]);
+      case 1:
+        await context.read<PriceProvider>().loadAdminPrices();
+      case 2:
+        await context.read<ReportProvider>().loadReports();
+      case 3:
+        await context.read<AdminUsersProvider>().loadUsers();
+      case 4:
+        // قائمة المنتجات مقسّمة إلى صفحات تُضاف لبعضها، فالتحديث
+        // يبدأ من الصفحة الأولى لا أن يُلحق صفحة جديدة بالقائمة.
+        await context.read<ProductProvider>().loadProducts(refresh: true);
+      case 5:
+        await context.read<StoreProvider>().loadStores();
+      case 6:
+        await Future.wait([
+          catalog.loadLocations(),
+          catalog.loadSectors(),
+        ]);
+      case 7:
+        await catalog.loadUnits();
+      case 8:
+        await catalog.loadBrands();
+      case 9:
+        await catalog.loadOfficialPrices();
+      case 10:
+        await catalog.loadDashboardStats();
+      default:
+        break;
+    }
+  }
+
   Widget _sidebarList(bool closeAsDrawer) => Container(
         color: AppColors.surfaceOf(context),
         child: SafeArea(
@@ -190,6 +298,11 @@ class _AdminShellState extends State<AdminShell> {
               ? null
               : [
                   IconButton(
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'تحديث',
+                    onPressed: _refreshCurrentScreen,
+                  ),
+                  IconButton(
                     icon: Icon(
                       appProvider.isDarkMode
                           ? Icons.light_mode_outlined
@@ -204,19 +317,34 @@ class _AdminShellState extends State<AdminShell> {
                 ],
         ),
         drawer: isWide ? null : Drawer(child: _sidebarList(true)),
-        body: isWide
-            ? Row(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    width: _sidebarOpen ? 220 : 0,
-                    child: _sidebarOpen ? _sidebarList(false) : null,
-                  ),
-                  if (_sidebarOpen) const VerticalDivider(width: 1),
-                  Expanded(child: _currentScreen),
-                ],
-              )
-            : _currentScreen,
+        // ═══════════════════════════════════════════════════════════
+        // ✅ إصلاح — جسم لوحة الإدارة كان يمتد خلف شريط تنقل
+        // أندرويد السفلي: Scaffold لا يخصم الحشوة السفلية للنظام
+        // عن الـ body تلقائياً (يفعل ذلك لـ bottomNavigationBar فقط)،
+        // ولا توجد هنا أي SafeArea، فكانت آخر بطاقة في كل قائمة
+        // تختفي خلف أزرار التنقل. SafeArea بـ top: false تحلّ ذلك لكل
+        // شاشات اللوحة دفعة واحدة، مع ترك الحافة العلوية لـ AppBar
+        // (الذي يتكفل بها أصلاً) حتّى لا تُحشى مرتين.
+        // ═══════════════════════════════════════════════════════════
+        body: SafeArea(
+          top: false,
+          child: RefreshIndicator(
+            onRefresh: _refreshCurrentScreen,
+            child: isWide
+                ? Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: _sidebarOpen ? 220 : 0,
+                        child: _sidebarOpen ? _sidebarList(false) : null,
+                      ),
+                      if (_sidebarOpen) const VerticalDivider(width: 1),
+                      Expanded(child: _currentScreen),
+                    ],
+                  )
+                : _currentScreen,
+          ),
+        ),
       ),
     );
   }
@@ -2216,15 +2344,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                       color: AppColors.error,
                                     ),
                                     onPressed: () async {
-                                      final confirmed = await showConfirmDialog(
+                                      final confirmed =
+                                          await confirmDeleteWithImpact(
                                         context,
+                                        type: 'user',
+                                        id: u.id,
                                         title: 'حذف المستخدم',
                                         message:
                                             'هل تريد حذف "${u.name}" نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
-                                        confirmText: 'حذف',
-                                        icon: Icons.delete_outline,
                                       );
-                                      if (confirmed != true || !mounted) return;
+                                      if (!confirmed || !mounted) return;
                                       final messenger =
                                           ScaffoldMessenger.of(context);
                                       final ok = await context
@@ -2522,14 +2651,14 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
   }
 
   Future<void> _confirmDelete(ProductModel p) async {
-    final ok = await showConfirmDialog(
+    final ok = await confirmDeleteWithImpact(
       context,
+      type: 'product',
+      id: p.id,
       title: 'حذف المنتج',
       message: 'هل تريد حذف "${p.name}"؟',
-      confirmText: 'حذف',
-      icon: Icons.delete_outline,
     );
-    if (ok != true || !mounted) return;
+    if (!ok || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final deleted = await context.read<ProductProvider>().deleteProduct(p.id);
     if (!mounted) return;
@@ -3166,14 +3295,14 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
 
   /// ✅ جديد — حذف متجر، مطابقةً لعنصر "حذف" الناقص سابقاً في نفس المخطط.
   Future<void> _confirmDeleteStore(StoreModel s) async {
-    final confirmed = await showConfirmDialog(
+    final confirmed = await confirmDeleteWithImpact(
       context,
+      type: 'store',
+      id: s.id,
       title: 'حذف المتجر',
       message: 'هل تريد حذف "${s.name}" نهائياً؟',
-      confirmText: 'حذف',
-      icon: Icons.delete_outline,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final ok = await context.read<StoreProvider>().deleteStore(s.id);
     if (!mounted) return;
@@ -3544,7 +3673,25 @@ class _AdminLocationsScreenState extends State<AdminLocationsScreen> {
   void _showLocationDialog(BuildContext context, {LocationModel? existing}) {
     final isEdit = existing != null;
     final areaCtrl = TextEditingController(text: existing?.area ?? '');
-    String selectedBlock = existing?.sector ?? AleppoBlocks.all.first.name;
+    // ✅ إصلاح — قائمة الكتل هنا كانت تأتي من AleppoBlocks الثابتة،
+    // بينما addLocation تحتاج sector_id حقيقياً من جدول sectors. أي كتلة
+    // موجودة محلياً وغائبة عن الخادم (مثال: "الكتلة الأولى"، واسمها
+    // على الخادم "حلب القديمة") كانت تجعل الإضافة تفشل دائماً.
+    final catalog = context.read<CatalogProvider>();
+    final blockNames = <String>{
+      ...catalog.sectors.map((s) => s.name),
+      ...catalog.locations.map((l) => l.sector),
+      if (existing != null) existing.sector,
+    }.where((name) => name.isNotEmpty).toList()
+      ..sort();
+    if (blockNames.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('أضف كتلة إدارية أولاً من "تعديل الكتل"'),
+        backgroundColor: AppColors.warning,
+      ));
+      return;
+    }
+    String selectedBlock = existing?.sector ?? blockNames.first;
 
     showDialog(
       context: context,
@@ -3572,9 +3719,11 @@ class _AdminLocationsScreenState extends State<AdminLocationsScreen> {
                   ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    initialValue: selectedBlock,
+                    initialValue: blockNames.contains(selectedBlock)
+                        ? selectedBlock
+                        : null,
                     isExpanded: true,
-                    items: AleppoBlocks.blockNames
+                    items: blockNames
                         .map((b) => DropdownMenuItem(value: b, child: Text(b)))
                         .toList(),
                     onChanged: (v) {
@@ -3651,9 +3800,10 @@ class _AdminLocationsScreenState extends State<AdminLocationsScreen> {
                             content: Text(
                               ok
                                   ? (isEdit ? 'تم التعديل' : 'تمت الإضافة')
-                                  : (isEdit
-                                      ? 'تعذّر التعديل'
-                                      : 'تعذّرت الإضافة'),
+                                  : (provider.errorMessage ??
+                                      (isEdit
+                                          ? 'تعذّر التعديل'
+                                          : 'تعذّرت الإضافة')),
                             ),
                             backgroundColor:
                                 ok ? AppColors.success : AppColors.error,
@@ -3679,14 +3829,14 @@ class _AdminLocationsScreenState extends State<AdminLocationsScreen> {
 
   /// ✅ جديد — حذف موقع، مطابقةً لعنصر "حذف" الناقص سابقاً في نفس المخطط.
   Future<void> _confirmDeleteLocation(LocationModel l) async {
-    final confirmed = await showConfirmDialog(
+    final confirmed = await confirmDeleteWithImpact(
       context,
+      type: 'location',
+      id: l.id,
       title: 'حذف المنطقة',
       message: 'هل تريد حذف "${l.area}" نهائياً؟',
-      confirmText: 'حذف',
-      icon: Icons.delete_outline,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final ok = await context.read<CatalogProvider>().deleteLocation(l.id);
     if (!mounted) return;
@@ -3715,6 +3865,27 @@ class _AdminLocationsScreenState extends State<AdminLocationsScreen> {
           .where((l) => l.area.contains(q) || l.landmark.contains(q))
           .toList();
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ✅ إصلاح — شرائح الفلترة كانت تُبنى من AleppoBlocks الثابتة،
+    // بينما القائمة نفسها تأتي من الخادم — فكل شريحة لا يقابلها شيء
+    // على الخادم تعطي "لا توجد مواقع مطابقة" دائماً، وأي كتلة
+    // أو منطقة موجودة فعلاً باسم مختلف لا تظهر لها شريحة أصلاً.
+    // ═══════════════════════════════════════════════════════════════
+    final blockNames = <String>{
+      ...catalog.sectors.map((s) => s.name),
+      ...catalog.locations.map((l) => l.sector),
+    }.where((name) => name.isNotEmpty).toList()
+      ..sort();
+    final areaNames = _blockFilter == 'الكل'
+        ? const <String>[]
+        : (catalog.locations
+            .where((l) => l.sector == _blockFilter)
+            .map((l) => l.area)
+            .where((area) => area.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort());
 
     return Column(
       children: [
@@ -3746,7 +3917,7 @@ class _AdminLocationsScreenState extends State<AdminLocationsScreen> {
               const SizedBox(height: 10),
               // ✅ فلترة حسب الكتلة الإدارية
               FilterChipRow(
-                options: ['الكل', ...AleppoBlocks.blockNames],
+                options: ['الكل', ...blockNames],
                 selected: _blockFilter,
                 onSelected: (v) => setState(() {
                   _blockFilter = v;
@@ -3758,7 +3929,7 @@ class _AdminLocationsScreenState extends State<AdminLocationsScreen> {
               if (_blockFilter != 'الكل') ...[
                 const SizedBox(height: 8),
                 FilterChipRow(
-                  options: ['الكل', ...AleppoBlocks.areasOfBlock(_blockFilter)],
+                  options: ['الكل', ...areaNames],
                   selected: _areaFilter,
                   onSelected: (v) => setState(() => _areaFilter = v),
                 ),
@@ -3921,39 +4092,32 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
     });
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  // ✅ إصلاح جوهري — الرقم الظاهر تحت اسم كل كتلة كان يُحسب من عدد سجلات
-  // LocationModel (من CatalogProvider.locations، أي "المواقع" المُسجَّلة
-  // فعلياً عبر شاشة "إدارة الكتل والمناطق" أو من الخادم) التي يطابق حقل
-  // sector فيها اسم الكتلة — وهذا عملياً عدد "مواقع" مرتبطة بالمتاجر، لا
-  // عدد "المناطق/الأحياء" الفعلي المُعرَّف لكل كتلة في aleppo_blocks.dart.
-  // النتيجتان مختلفتان تماماً وغير متسقتين:
-  //   • الكتل الرسمية الخمس تملك عشرات الأحياء الثابتة (16 إلى 33 حياً)،
-  //     لكن الرقم المعروض كان يعتمد فقط على عدد سجلات LocationModel
-  //     الموجودة فعلياً في القائمة (وقد يكون أقل بكثير أو صفراً).
-  //   • أي كتلة جديدة يضيفها المسؤول (عبر "إضافة كتلة جديدة" أدناه) تُعرَّف
-  //     أحياؤها مباشرة داخل AleppoBlocks (بلا أي سجل LocationModel مقابل
-  //     لها بالضرورة)، فكان رقمها يظهر صفراً دائماً بعد الإضافة مباشرة،
-  //     خلافاً تماماً لسلوك الكتل الرسمية — وهو بالضبط التناقض المُبلَّغ عنه.
+  // ═══════════════════════════════════════════════════════════════════════
+  // ✅ إصلاح جوهري — مصدر الكتل وأعداد مناطقها أصبح الخادم.
   //
-  // الإصلاح: الرقم أصبح يُشتق حصرياً من AleppoBlocks.areasOfBlock(name)
-  // — المصدر الوحيد والموحّد لعدد "المناطق" الفعلي لأي كتلة، رسمية كانت أم
-  // مضافة من المسؤول، تماماً كما تعرضه بقية شاشات التطبيق (فلاتر الأحياء،
-  // منتقي الموقع...). بهذا تصبح كتلة مضافة حديثاً مطابقة تماماً لسلوك أي
-  // كتلة رسمية: رقمها يعكس فوراً عدد الأحياء التي أُضيفت لها عند الإنشاء
-  // (أو لاحقاً)، بلا أي فرق في الشكل أو المبدأ.
+  // كانت هذه الشاشة تقرأ الكتل من AleppoBlocks (قائمة ثابتة داخل
+  // الكود + إضافات محفوظة في SharedPreferences) وتعرض عدد أحياء كل
+  // كتلة في تلك القائمة، بينما إعادة التسمية والحذف وشاشة "إدارة
+  // الكتل والمناطق" تعمل كلها على جدولي sectors/locations على الخادم.
+  // المصدران متباعدان فعلاً: الخادم يسمّي الكتلة الأولى "حلب القديمة"
+  // ويملك لها 14 منطقة، فكانت الشاشة تعرض "الكتلة الأولى — 16 منطقة"
+  // لكتلة لا وجود لها على الخادم أصلاً — فتظهر أرقام غير صحيحة، وتقول
+  // نافذة التعديل "0 منطقة"، ويُمنع تعديل الاسم، وتبقى الكتل الموجودة
+  // فعلاً باسم مختلف مخفية تماماً.
   //
-  // ملاحظة: الوسيط [locations] لم يعد يُستخدَم في حساب العدّاد (أُبقي في
-  // التوقيع فقط لعدم كسر نقطة الاستدعاء في build()، والتي ما زالت بحاجة
-  // لقائمة locations بشكل منفصل لحساب "members" عند التعديل/الحذف).
-  // ══════════════════════════════════════════════════════════════════════
-  List<MapEntry<String, int>> _blocksOf(List<LocationModel> locations) {
-    final entries = AleppoBlocks.all
-        .map((block) => MapEntry(
-              block.name,
-              AleppoBlocks.areasOfBlock(block.name).length,
-            ))
-        .toList()
+  // الآن: الأسماء من CatalogProvider.sectors، والرقم هو عدد المناطق
+  // (locations) المسجّلة فعلاً لكل كتلة — وهو بالضبط ما تطاله إعادة
+  // التسمية والحذف، وما تعرضه قائمة المناطق، فتتطابق الأرقام مع الواقع.
+  // ═══════════════════════════════════════════════════════════════════════
+  List<MapEntry<String, int>> _blocksOf(CatalogProvider catalog) {
+    final counts = <String, int>{
+      for (final sector in catalog.sectors) sector.name: 0,
+    };
+    for (final loc in catalog.locations) {
+      if (loc.sector.isEmpty) continue;
+      counts[loc.sector] = (counts[loc.sector] ?? 0) + 1;
+    }
+    final entries = counts.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
     return entries;
   }
@@ -4055,37 +4219,58 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
                       child: ElevatedButton(
                         onPressed: () async {
                           final trimmedName = nameCtrl.text.trim();
-                          if (AleppoBlocks.all
-                              .any((block) => block.name == trimmedName)) {
+                          final catalog = context.read<CatalogProvider>();
+                          if (catalog.sectors
+                              .any((sector) => sector.name == trimmedName)) {
                             setDialogState(
                                 () => nameError = 'يرجى إدخال اسم فريد للكتلة');
                             return;
                           }
-                          final sectorCreated = await context
-                              .read<CatalogProvider>()
-                              .addSector(trimmedName);
+                          final sectorCreated =
+                              await catalog.addSector(trimmedName);
                           if (!sectorCreated) {
                             setDialogState(() =>
                                 nameError = 'تعذّرت إضافة الكتلة إلى الخادم');
                             return;
                           }
-                          final ok = await AleppoBlocks.addBlock(
+                          await AleppoBlocks.addBlock(
                             trimmedName,
                             areas: pendingAreas,
                           );
-                          if (!ok) {
-                            setDialogState(
-                                () => nameError = 'يرجى إدخال اسم فريد للكتلة');
-                            return;
+                          // ═══════════════════════════════════════
+                          // ✅ إصلاح — المناطق المضافة هنا كانت
+                          // تُحفظ محلياً فقط (SharedPreferences داخل
+                          // AleppoBlocks)، فلا يراها الخادم ولا تظهر
+                          // في قائمة "إدارة الكتل والمناطق" ولا في أي
+                          // شاشة تقرأ المواقع من الـ backend — وهذا
+                          // سبب "لم تظهر المنطقة التي تمت إضافتها".
+                          // الآن يُنشأ لكل منطقة سجل حقيقي
+                          // (POST /locations) تحت الكتلة الجديدة.
+                          // ═══════════════════════════════════════
+                          var addedAreas = 0;
+                          for (final area in pendingAreas) {
+                            final added = await catalog.addLocation(
+                              sector: trimmedName,
+                              area: area,
+                              landmark: '',
+                            );
+                            if (added) addedAreas++;
                           }
                           if (!ctx.mounted) return;
                           Navigator.pop(ctx);
                           if (!mounted) return;
                           setState(() {});
+                          final missing = pendingAreas.length - addedAreas;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('تمت إضافة الكتلة بنجاح'),
-                              backgroundColor: AppColors.success,
+                            SnackBar(
+                              content: Text(
+                                missing == 0
+                                    ? 'تمت إضافة الكتلة بنجاح'
+                                    : 'أُضيفت الكتلة، وتعذّرت إضافة $missing من مناطقها',
+                              ),
+                              backgroundColor: missing == 0
+                                  ? AppColors.success
+                                  : AppColors.warning,
                             ),
                           );
                         },
@@ -4103,15 +4288,13 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
     );
   }
 
+  // ✅ إصلاح — كان تعديل اسم أي كتلة رسمية ممنوعاً ما لم توجد
+  // لها مناطق بنفس الاسم في locations، وهو شرط لا معنى له: إعادة
+  // التسمية عملية على صف sectors نفسه (PUT /sectors/{id})، والمناطق
+  // تتبعه بمفتاح أجنبي لا بالاسم. ولأن أسماء الكتل المعروضة صارت
+  // تأتي من الخادم، فكل كتلة في القائمة قابلة للتعديل فعلاً.
   Future<void> _renameBlock(String oldName, List<LocationModel> members) async {
     final isCustom = AleppoBlocks.isCustomBlock(oldName);
-    if (!isCustom && members.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('أضف مناطق لهذه الكتلة أولاً لتتمكن من تعديلها'),
-        backgroundColor: AppColors.warning,
-      ));
-      return;
-    }
     final ctrl = TextEditingController(text: oldName);
     final newName = await showDialog<String>(
       context: context,
@@ -4182,16 +4365,17 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
     if (newName == null || newName.isEmpty || newName == oldName) return;
     if (!mounted) return;
 
-    if (AleppoBlocks.all.any((block) => block.name == newName)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<CatalogProvider>();
+    // ✅ التحقق من تكرار الاسم أصبح على كتل الخادم (وهي ما يفرض
+    // عليه الخادم قيد unique) لا على القائمة المحلية الثابتة.
+    if (provider.sectors.any((sector) => sector.name == newName)) {
+      messenger.showSnackBar(const SnackBar(
         content: Text('هذا الاسم مستخدم من قبل كتلة أخرى'),
         backgroundColor: AppColors.error,
       ));
       return;
     }
-
-    final messenger = ScaffoldMessenger.of(context);
-    final provider = context.read<CatalogProvider>();
     setState(() => _busy = true);
     var failures = 0;
     if (AppConfig.useMockData) {
@@ -4211,48 +4395,74 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
       final renamed = await AleppoBlocks.renameCustomBlock(oldName, newName);
       if (!renamed) failures++;
     }
+    // ✅ كل LocationModel مُحمّلة تحمل اسم الكتلة القديم ضمنها،
+    // فبلا إعادة جلب تبقى القوائم والشرائح تعرض الاسم السابق.
+    if (failures == 0) await provider.loadLocations();
     if (!mounted) return;
     setState(() => _busy = false);
     messenger.showSnackBar(
       SnackBar(
         content: Text(
           failures == 0
-              ? 'تم تعديل اسم الكتلة لكل المناطق التابعة لها'
-              : 'تعذّر تحديث $failures من ${members.length} منطقة',
+              ? 'تم تعديل اسم الكتلة'
+              : (provider.errorMessage ?? 'تعذّر تعديل اسم الكتلة'),
         ),
         backgroundColor: failures == 0 ? AppColors.success : AppColors.error,
       ),
     );
   }
 
+  // ✅ محدَّث — حذف الكتلة أصبح طلباً واحداً: الخادم يحذف معها
+  // مناطقها ومتاجرها وأسعارها في معاملة واحدة. كان الحذف سابقاً حلقة
+  // طلب لكل منطقة ثم طلباً للكتلة، فإن فشل أحدها في المنتصف بقيت
+  // الكتلة ناقصة بلا إمكانية تراجع.
   Future<void> _deleteBlock(String name, List<LocationModel> members) async {
-    final isOfficial = AleppoBlocks.isOfficialBlock(name);
-    final confirmed = await showConfirmDialog(
-      context,
-      title: 'حذف الكتلة',
-      message: isOfficial
-          ? 'سيؤدي هذا إلى حذف الكتلة الرسمية "$name" وكل المناطق الـ${members.length} التابعة لها نهائياً من كل شاشات التطبيق.'
-          : 'سيؤدي هذا إلى حذف "$name" وكل المناطق الـ${members.length} التابعة لها نهائياً. لا يمكن التراجع عن هذا الإجراء.',
-      confirmText: 'حذف الكتلة',
-      icon: Icons.delete_forever_outlined,
-    );
-    if (confirmed != true || !mounted) return;
+    final provider = context.read<CatalogProvider>();
+    final sectorId = provider.sectorIdForName(name);
+    final confirmed = sectorId == null
+        ? await showConfirmDialog(
+              context,
+              title: 'حذف الكتلة',
+              message: 'هل تريد حذف "$name" وكل مناطقها نهائياً؟',
+              confirmText: 'حذف الكتلة',
+              icon: Icons.delete_forever_outlined,
+            ) ==
+            true
+        : await confirmDeleteWithImpact(
+            context,
+            type: 'sector',
+            id: sectorId,
+            title: 'حذف الكتلة',
+            message: 'هل تريد حذف "$name" وكل مناطقها نهائياً؟',
+            confirmText: 'حذف الكتلة',
+            icon: Icons.delete_forever_outlined,
+          );
+    if (!confirmed || !mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
-    final provider = context.read<CatalogProvider>();
     setState(() => _busy = true);
     var failures = 0;
-    for (final loc in members) {
-      final ok = await provider.deleteLocation(loc.id);
-      if (!ok) failures++;
+    if (AppConfig.useMockData) {
+      for (final loc in members) {
+        final ok = await provider.deleteLocation(loc.id);
+        if (!ok) failures++;
+      }
+    } else if (!await provider.deleteSector(name)) {
+      failures++;
     }
+    // ✅ القائمة المحلية تُنظّف فقط إن كانت هذه الكتلة معروفة لها:
+    // أسماء الكتل أصبحت تأتي من الخادم، وكثير منها لا وجود له في
+    // AleppoBlocks أصلاً، فكان deleteBlock يُرجع false فيُحسب فشلاً
+    // وتظهر رسالة خطأ رغم نجاح الحذف على الخادم.
     if (failures == 0 &&
-        !AppConfig.useMockData &&
-        !await provider.deleteSector(name)) {
+        (AleppoBlocks.isCustomBlock(name) ||
+            AleppoBlocks.isOfficialBlock(name)) &&
+        !await AleppoBlocks.deleteBlock(name)) {
       failures++;
     }
-    if (failures == 0 && !await AleppoBlocks.deleteBlock(name)) {
-      failures++;
+    if (failures == 0) {
+      await provider.loadLocations();
+      await provider.loadSectors();
     }
     if (!mounted) return;
     setState(() => _busy = false);
@@ -4261,7 +4471,7 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
         content: Text(
           failures == 0
               ? 'تم حذف الكتلة وكل مناطقها'
-              : 'تعذّر حذف $failures من ${members.length} منطقة',
+              : (provider.errorMessage ?? 'تعذّر حذف الكتلة'),
         ),
         backgroundColor: failures == 0 ? AppColors.success : AppColors.error,
       ),
@@ -4271,7 +4481,7 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
-    final blocks = _blocksOf(catalog.locations);
+    final blocks = _blocksOf(catalog);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -4282,6 +4492,19 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
             icon: const Icon(Icons.arrow_forward_ios, size: 18),
             onPressed: () => Navigator.pop(context),
           ),
+          // ✅ جديد — هذه الشاشة تُفتح كمسار مستقل خارج لوحة
+          // الإدارة، فلا يصلها زر التحديث العام في AdminShell.
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'تحديث',
+              onPressed: () {
+                final provider = context.read<CatalogProvider>();
+                provider.loadLocations();
+                provider.loadSectors();
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -4332,7 +4555,12 @@ class _AdminBlocksScreenState extends State<AdminBlocksScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            0,
+                            16,
+                            MediaQuery.of(context).padding.bottom,
+                          ),
                           itemCount: blocks.length,
                           itemBuilder: (ctx, i) {
                             final entry = blocks[i];
@@ -4637,19 +4865,39 @@ class _AdminUnitsScreenState extends State<AdminUnitsScreen> {
                                   color: AppColors.error,
                                   size: 20,
                                 ),
+                                // ✅ نفس إصلاح شاشة العلامات التجارية أدناه:
+                                // الخادم يرفض حذف واحدة مستخدمة في
+                                // أسعار أو أسعار رسمية، وكان الرفض يُبلع
+                                // بلا أي رسالة.
                                 onPressed: () async {
-                                  final confirmed = await showConfirmDialog(
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  final provider =
+                                      context.read<CatalogProvider>();
+                                  final confirmed =
+                                      await confirmDeleteWithImpact(
                                     ctx,
+                                    type: 'unit',
+                                    id: u.id,
                                     title: 'حذف الواحدة',
-                                    message: 'هل تريد حذف هذه الواحدة؟',
-                                    confirmText: 'حذف',
-                                    icon: Icons.delete_outline,
+                                    message: 'هل تريد حذف "${u.name}"؟',
                                   );
-                                  if (confirmed == true && mounted) {
-                                    await context
-                                        .read<CatalogProvider>()
-                                        .deleteUnit(u.id);
-                                  }
+                                  if (!confirmed || !mounted) return;
+                                  final ok = await provider.deleteUnit(u.id);
+                                  if (!mounted) return;
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        ok
+                                            ? 'تم حذف الواحدة'
+                                            : (provider.errorMessage ??
+                                                'تعذّر الحذف'),
+                                      ),
+                                      backgroundColor: ok
+                                          ? AppColors.success
+                                          : AppColors.error,
+                                    ),
+                                  );
                                 },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
@@ -4846,19 +5094,44 @@ class _AdminBrandsScreenState extends State<AdminBrandsScreen> {
                                   color: AppColors.error,
                                   size: 20,
                                 ),
+                                // ═════════════════════════════════════
+                                // ✅ إصلاح — كانت نتيجة deleteBrand
+                                // تُهمل تماماً بلا أي رسالة، فإن
+                                // رفض الخادم الحذف (409 لأن العلامة
+                                // مستخدمة في أسعار مسجلة) كان يظهر
+                                // للمسؤول وكأن الزر لا يعمل. الآن تُعرض
+                                // رسالة الخادم نفسها (CatalogProvider
+                                // .errorMessage) ليعرف سبب الرفض.
+                                // ═════════════════════════════════════
                                 onPressed: () async {
-                                  final confirmed = await showConfirmDialog(
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  final provider =
+                                      context.read<CatalogProvider>();
+                                  final confirmed =
+                                      await confirmDeleteWithImpact(
                                     ctx,
+                                    type: 'brand',
+                                    id: b.id,
                                     title: 'حذف العلامة التجارية',
-                                    message: 'هل تريد حذف هذه العلامة؟',
-                                    confirmText: 'حذف',
-                                    icon: Icons.delete_outline,
+                                    message: 'هل تريد حذف "${b.name}"؟',
                                   );
-                                  if (confirmed == true && mounted) {
-                                    await context
-                                        .read<CatalogProvider>()
-                                        .deleteBrand(b.id);
-                                  }
+                                  if (!confirmed || !mounted) return;
+                                  final ok = await provider.deleteBrand(b.id);
+                                  if (!mounted) return;
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        ok
+                                            ? 'تم حذف العلامة'
+                                            : (provider.errorMessage ??
+                                                'تعذّر الحذف'),
+                                      ),
+                                      backgroundColor: ok
+                                          ? AppColors.success
+                                          : AppColors.error,
+                                    ),
+                                  );
                                 },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
@@ -4943,6 +5216,35 @@ class _AdminOfficialPricesScreenState extends State<AdminOfficialPricesScreen> {
           // التحميل حتى لو فُتحت النافذة قبل وصول الاستجابة.
           final products = context.watch<ProductProvider>().products;
           final units = context.watch<CatalogProvider>().units;
+
+          // ════════════════════════════════════════════════════════
+          // ✅ إصلاح انهيار نافذة "تعديل سعر رسمي": قائمة
+          // ProductProvider.products مفلترة ومقسّمة إلى صفحات
+          // (تصنيف/بحث/الصفحات المُحمّلة حتّى الآن) ومشتركة مع
+          // شاشات المستخدم، فقد لا تحتوي المنتج المرتبط بالسعر
+          // الجاري تعديله، وقد يتكرر فيها المنتج نفسه عند تجميع
+          // الصفحات. وDropdownButtonFormField يشترط وجود عنصر واحد
+          // بالضبط يطابق القيمة الحالية، فكان يرمي assertion ويصبغ
+          // الشاشة بالأحمر فور فتح نافذة التعديل. نبني هنا خريطة
+          // (المعرّف ← الاسم) بلا تكرار، ونضيف إليها منتج ووحدة
+          // السجل الجاري تعديله إن غابا عن القائمتين، حتّى تبقى القيمة
+          // الحالية ظاهرة ومحفوظة إن لم يغيّرها المستخدم.
+          // ════════════════════════════════════════════════════════
+          final productItems = <String, String>{
+            for (final p in products) p.id: p.name,
+          };
+          if (existing?.productId != null) {
+            productItems.putIfAbsent(
+              existing!.productId!,
+              () => existing.productName,
+            );
+          }
+          final unitItems = <String, String>{
+            for (final u in units) u.id: u.name,
+          };
+          if (existing?.unitId != null) {
+            unitItems.putIfAbsent(existing!.unitId!, () => existing.unit);
+          }
           return Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
@@ -4966,18 +5268,20 @@ class _AdminOfficialPricesScreenState extends State<AdminOfficialPricesScreen> {
                     ),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      initialValue: selectedProductId,
+                      initialValue: productItems.containsKey(selectedProductId)
+                          ? selectedProductId
+                          : null,
                       isExpanded: true,
                       hint: const Text(
                         'اختر المنتج',
                         style: TextStyle(fontSize: 13),
                       ),
-                      items: products
+                      items: productItems.entries
                           .map(
                             (p) => DropdownMenuItem(
-                              value: p.id,
+                              value: p.key,
                               child: Text(
-                                p.name,
+                                p.value,
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ),
@@ -5019,18 +5323,21 @@ class _AdminOfficialPricesScreenState extends State<AdminOfficialPricesScreen> {
                               ),
                               const SizedBox(height: 6),
                               DropdownButtonFormField<String>(
-                                initialValue: selectedUnitId,
+                                initialValue:
+                                    unitItems.containsKey(selectedUnitId)
+                                        ? selectedUnitId
+                                        : null,
                                 isExpanded: true,
                                 hint: const Text(
                                   'اختر',
                                   style: TextStyle(fontSize: 13),
                                 ),
-                                items: units
+                                items: unitItems.entries
                                     .map(
                                       (u) => DropdownMenuItem(
-                                        value: u.id,
+                                        value: u.key,
                                         child: Text(
-                                          u.name,
+                                          u.value,
                                           style: const TextStyle(fontSize: 14),
                                         ),
                                       ),
@@ -5080,18 +5387,20 @@ class _AdminOfficialPricesScreenState extends State<AdminOfficialPricesScreen> {
                         onPressed: () async {
                           final qty = double.tryParse(qtyCtrl.text.trim());
                           final price = double.tryParse(priceCtrl.text.trim());
+                          // ✅ الاسمان يُقرأان من الخريطتين أعلاه بدل
+                          // firstWhere على القائمتين مباشرة، لأن firstWhere
+                          // يرمي StateError إن كان المنتج أو الوحدة
+                          // المختارة خارج الصفحة المُحمّلة.
+                          final productName = productItems[selectedProductId];
+                          final unitName = unitItems[selectedUnitId];
                           if (selectedProductId == null ||
                               selectedUnitId == null ||
+                              productName == null ||
+                              unitName == null ||
                               qty == null ||
                               price == null) {
                             return;
                           }
-                          final productName = products
-                              .firstWhere((p) => p.id == selectedProductId)
-                              .name;
-                          final unitName = units
-                              .firstWhere((u) => u.id == selectedUnitId)
-                              .name;
                           final navigator = Navigator.of(ctx);
                           final provider = context.read<CatalogProvider>();
                           final ok = isEdit
@@ -5167,6 +5476,23 @@ class _AdminOfficialPricesScreenState extends State<AdminOfficialPricesScreen> {
     );
   }
 
+  // ✅ إصلاح عرض السعر في القائمة: كان النص يُبنى بـ
+  // '${(op.price / 1000).toStringAsFixed(0)},000'، وهو لا ينسّق الرقم بل
+  // يخترع قيمة أخرى: يقسم على ألف ثم يُلصق ",000" ثابتة،
+  // فيظهر السعر 500 بـ"0,000" والسعر 1500 بـ"2,000" ويضيع
+  // كل ما دون الألف من أي سعر. الآن يُعرض الرقم الفعلي مع
+  // فاصلة آلاف، بنفس منطق _formatPrice المستخدم في بقية
+  // الشاشات، فيطابق ما يظهر داخل نافذة التعديل.
+  String _formatPrice(double v) {
+    final digits = v.round().toString();
+    final buffer = StringBuffer();
+    for (var index = 0; index < digits.length; index++) {
+      if (index > 0 && (digits.length - index) % 3 == 0) buffer.write(',');
+      buffer.write(digits[index]);
+    }
+    return buffer.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
@@ -5232,7 +5558,7 @@ class _AdminOfficialPricesScreenState extends State<AdminOfficialPricesScreen> {
                           Text(op.unit, style: const TextStyle(fontSize: 12)),
                           const SizedBox(width: 10),
                           Text(
-                            '${(op.price / 1000).toStringAsFixed(0)},000 ل.س',
+                            '${_formatPrice(op.price)} ل.س',
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.primary,
@@ -7041,6 +7367,13 @@ class _AdminAdminsScreenState extends State<AdminAdminsScreen> {
             icon: const Icon(Icons.arrow_forward_ios, size: 18),
             onPressed: () => Navigator.pop(context),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'تحديث',
+              onPressed: () => context.read<AdminUsersProvider>().loadUsers(),
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -7072,7 +7405,12 @@ class _AdminAdminsScreenState extends State<AdminAdminsScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            0,
+                            16,
+                            MediaQuery.of(context).padding.bottom,
+                          ),
                           itemCount: admins.length,
                           itemBuilder: (ctx, i) {
                             final a = admins[i];

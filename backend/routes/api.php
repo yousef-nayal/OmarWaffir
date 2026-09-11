@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\DeletionImpactController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogController;
@@ -121,6 +122,10 @@ Route::middleware(['auth:sanctum', 'active', 'role:1'])->group(function () {
     Route::delete('admin/users/{user}', [AdminUserController::class, 'destroy']);
     Route::patch('admin/users/{user}/block', [AdminUserController::class, 'block']);
     Route::patch('admin/users/{user}/unblock', [AdminUserController::class, 'unblock']);
+
+    // What a delete would take with it, for the confirmation dialog.
+    Route::get('admin/deletion-impact/{type}/{id}', [DeletionImpactController::class, 'show'])
+        ->whereNumber('id');
 
     Route::get('admin/dashboard-stats', [DashboardController::class, 'stats']);
     Route::get('admin/recent-activity', [DashboardController::class, 'recentActivity']);

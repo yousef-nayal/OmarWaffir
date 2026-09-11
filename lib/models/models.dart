@@ -752,6 +752,44 @@ class LocationModel {
       };
 }
 
+// ═════════════════════════════════════════════════════════════════════════════════
+// ✅ جديد — ما سيُحذف مع عنصر ما (GET /admin/deletion-impact/{type}/{id}).
+// حذف وحدة أو علامة أو منتج أو متجر أو مستخدم أو منطقة أو كتلة
+// يأخذ معه الأسعار المسجّلة عليه، فتُعرض هذه الأرقام في نافذة التأكيد
+// قبل الحذف. الخادم يحسبها بنفس الخدمة التي تنفّذ الحذف، فلا يختلف الرقم
+// المعروض عمّا يُحذف فعلاً.
+// ═════════════════════════════════════════════════════════════════════════════════
+class DeletionImpact {
+  final int prices;
+  final int officialPrices;
+  final int stores;
+  final int locations;
+  final int users;
+
+  const DeletionImpact({
+    this.prices = 0,
+    this.officialPrices = 0,
+    this.stores = 0,
+    this.locations = 0,
+    this.users = 0,
+  });
+
+  factory DeletionImpact.fromJson(Map<String, dynamic> json) => DeletionImpact(
+        prices: (json['prices'] as num?)?.toInt() ?? 0,
+        officialPrices: (json['official_prices'] as num?)?.toInt() ?? 0,
+        stores: (json['stores'] as num?)?.toInt() ?? 0,
+        locations: (json['locations'] as num?)?.toInt() ?? 0,
+        users: (json['users'] as num?)?.toInt() ?? 0,
+      );
+
+  bool get isEmpty =>
+      prices == 0 &&
+      officialPrices == 0 &&
+      stores == 0 &&
+      locations == 0 &&
+      users == 0;
+}
+
 class SectorModel {
   final String id;
   final String name;

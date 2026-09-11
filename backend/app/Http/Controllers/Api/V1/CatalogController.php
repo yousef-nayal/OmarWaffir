@@ -11,6 +11,7 @@ use App\Models\Brand;
 use App\Models\Location;
 use App\Models\Sector;
 use App\Models\Unit;
+use App\Services\DeletionImpactService;
 use App\Support\ApiResponse;
 use App\Support\Msg;
 use Illuminate\Http\JsonResponse;
@@ -27,6 +28,10 @@ use Illuminate\Validation\Rule;
  */
 class CatalogController extends Controller
 {
+    public function __construct(private readonly DeletionImpactService $impact)
+    {
+    }
+
     // ── Sectors ────────────────────────────────────────────────────────────
 
     public function sectors(): JsonResponse
@@ -63,13 +68,17 @@ class CatalogController extends Controller
         return ApiResponse::ok(new SectorResource($sector->loadCount('locations')), Msg::UPDATED);
     }
 
+    /**
+     * Deleting a block takes its areas with it - and the shops and prices
+     * recorded in them. The admin is shown those numbers first: the app reads
+     * them from GET /admin/deletion-impact/sector/{id}.
+     */
     public function destroySector(Sector $sector): JsonResponse
     {
-        if ($sector->locations()->exists()) {
-            return ApiResponse::fail(Msg::IN_USE, 409);
-        }
-
-        $sector->delete();
+        DB::transaction(function () use ($sector): void {
+            $this->impact->purge('sector', $sector->id);
+            $sector->delete();
+        });
 
         return ApiResponse::action(Msg::DELETED);
     }
@@ -141,13 +150,17 @@ class CatalogController extends Controller
         );
     }
 
+    /**
+     * The shops of an area cannot outlive it (stores.location_id is not
+     * nullable), so they go, and their prices with them. Residents keep their
+     * account and simply lose the link.
+     */
     public function destroyLocation(Location $location): JsonResponse
     {
-        if ($location->stores()->exists() || $location->users()->exists()) {
-            return ApiResponse::fail(Msg::IN_USE, 409);
-        }
-
-        $location->delete();
+        DB::transaction(function () use ($location): void {
+            // purge() deletes the area itself along with its shops.
+            $this->impact->purge('location', $location->id);
+        });
 
         return ApiResponse::action(Msg::DELETED);
     }
@@ -188,11 +201,10 @@ class CatalogController extends Controller
 
     public function destroyUnit(Unit $unit): JsonResponse
     {
-        if ($unit->prices()->exists() || $unit->officialPrices()->exists()) {
-            return ApiResponse::fail(Msg::IN_USE, 409);
-        }
-
-        $unit->delete();
+        DB::transaction(function () use ($unit): void {
+            $this->impact->purge('unit', $unit->id);
+            $unit->delete();
+        });
 
         return ApiResponse::action(Msg::DELETED);
     }
@@ -239,11 +251,10 @@ class CatalogController extends Controller
 
     public function destroyBrand(Brand $brand): JsonResponse
     {
-        if ($brand->prices()->exists()) {
-            return ApiResponse::fail(Msg::IN_USE, 409);
-        }
-
-        $brand->delete();
+        DB::transaction(function () use ($brand): void {
+            $this->impact->purge('brand', $brand->id);
+            $brand->delete();
+        });
 
         return ApiResponse::action(Msg::DELETED);
     }

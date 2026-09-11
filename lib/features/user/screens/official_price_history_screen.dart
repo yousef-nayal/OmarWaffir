@@ -52,9 +52,19 @@ class _OfficialPriceHistoryScreenState
   String _fmtDate(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  String _fmtPrice(double v) => v >= 1000
-      ? '${(v / 1000).toStringAsFixed(0)},${(v % 1000).toInt().toString().padLeft(3, '0')}'
-      : v.toStringAsFixed(0);
+  // ✅ إصلاح التنسيق: الصيغة السابقة كانت تقسم على ألف وتُقرّب
+  // الناتج، فيظهر 1500 بـ"2,500"، وتدعم خانة آلاف واحدة فقط
+  // فيظهر 1234567 بـ"1235,567". الآن تُدرج الفواصل كل ثلاث
+  // خانات على الرقم الفعلي، بنفس منطق _f في بقية الشاشات.
+  String _fmtPrice(double v) {
+    final digits = v.round().toString();
+    final buffer = StringBuffer();
+    for (var index = 0; index < digits.length; index++) {
+      if (index > 0 && (digits.length - index) % 3 == 0) buffer.write(',');
+      buffer.write(digits[index]);
+    }
+    return buffer.toString();
+  }
 
   @override
   Widget build(BuildContext context) {

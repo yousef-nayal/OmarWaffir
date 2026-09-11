@@ -1,26 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Cleartext (plain HTTP) is refused by default on Android 9+, which is what we
-    want for anything public. The local Laravel development server does not have
-    TLS, so cleartext is permitted for development hosts ONLY:
+    want for anything public. The local Laravel development server has no TLS,
+    so cleartext has to be permitted for development hosts.
 
-      127.0.0.1   the host reached through `adb reverse tcp:8000 tcp:8000`
-      localhost   same thing by name
-      10.0.2.2    the developer machine as seen from the Android emulator
+    Two different rules, on purpose:
 
-    A physical device on the same Wi-Fi as the backend should either keep using
-    `adb reverse` (recommended, nothing to configure) or have its developer LAN
-    IP added below. Production traffic must use HTTPS, which this file does not
-    affect.
+    * debug-overrides applies ONLY to a debuggable build (flutter run, or a
+      debug APK). It allows any cleartext host, so the developer machine's LAN
+      address can change without editing this file.
+
+    * domain-config applies to every build, release included. It lists only
+      fixed development addresses plus the LAN address used for demos, because
+      a release build must not be a blanket cleartext exception.
+
+    Reaching the API from a real phone, easiest first:
+      1. USB          "adb reverse tcp:8000 tcp:8000", then use 127.0.0.1
+      2. HTTPS tunnel a VS Code forwarded port, no entry needed here at all
+      3. Same Wi-Fi   add the laptop's address below and rebuild
+
+    Production traffic must use HTTPS, which none of this affects.
+
+    Note for editors: XML comments may not contain two consecutive hyphens,
+    so command line flags are written without their leading dashes here.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false" />
 
+    <debug-overrides cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
     <domain-config cleartextTrafficPermitted="true">
+        <!-- Reached through adb reverse over USB. Always correct. -->
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">localhost</domain>
+        <!-- The host machine, as seen from the Android emulator. -->
         <domain includeSubdomains="false">10.0.2.2</domain>
-        <!-- Developer LAN address used while demonstrating on a real phone. -->
-        <domain includeSubdomains="false">192.168.43.110</domain>
+        <!-- Developer LAN address. Update this when the network changes. -->
+        <domain includeSubdomains="false">172.16.40.88</domain>
     </domain-config>
 </network-security-config>

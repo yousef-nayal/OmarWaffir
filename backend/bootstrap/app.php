@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddContentLength;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\ForceJsonResponse;
@@ -28,6 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(prepend: [
+            // Outermost on purpose: it has to see the finished response,
+            // including the ones rendered from exceptions.
+            AddContentLength::class,
             ForceJsonResponse::class,
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);

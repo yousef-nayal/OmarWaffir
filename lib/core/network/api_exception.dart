@@ -50,6 +50,11 @@ class ApiException implements Exception {
     String? backendMessage;
     Map<String, dynamic>? validationErrors;
 
+    // ✅ هل جاء الرد من خادمنا أصلاً؟ ردودنا دائماً JSON بحقل message.
+    // أي رد آخر (HTML أو فارغ) يعني أن وسيطاً بيننا وبين الخادم ردّ
+    // قبل أن يصل الطلب (نفق dev tunnel خاص، بروكسي، بوابة شبكة).
+    final isApiResponse = data is Map<String, dynamic>;
+
     if (data is Map<String, dynamic>) {
       backendMessage = data['message'] as String?;
       if (data['errors'] is Map<String, dynamic>) {
@@ -64,9 +69,16 @@ class ApiException implements Exception {
         // فيرى المستخدم "انتهت جلستك" وهو لم يبدأ جلسة أصلاً. الخادم يرسل
         // رسالة عربية دقيقة لكل حالة (بيانات دخول خاطئة / انتهاء الجلسة)،
         // فنعرضها كما هي ونحتفظ بالنص العام كبديل عند غيابها فقط.
+        // ✅ إضافة — 401 بلا جسم JSON لم يأتِ من خادمنا، فلا علاقة له بانتهاء
+        // الجلسة. إظهار "انتهت جلستك" في هذه الحالة يضلّل تماماً — وقع
+        // ذلك فعلاً مع نفق VS Code مضبوط على Private: النفق يردّ 401
+        // قبل أن يصل طلب تسجيل الدخول إلى Laravel.
         return ApiException(
           type: ApiErrorType.unauthorized,
-          message: backendMessage ?? 'انتهت جلستك. يرجى تسجيل الدخول مجدداً.',
+          message: backendMessage ??
+              (isApiResponse
+                  ? 'انتهت جلستك. يرجى تسجيل الدخول مجدداً.'
+                  : 'تعذّر الوصول إلى الخادم: رُفض الطلب قبل وصوله. تحقق من رابط الخادم.'),
           statusCode: status,
         );
       case 403:

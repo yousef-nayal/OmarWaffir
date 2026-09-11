@@ -32,6 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
           locationId: appProvider.selectedLocationId,
         );
       }
+      // ✅ ترتيب "أكبر الفروقات" يأتي من الخادم (sort=gap) لموقع
+      // المستخدم المختار، فيغطّي كل المنتجات لا الصفحة الأولى منها.
+      productProvider.loadTopGaps(
+        locationId: appProvider.selectedLocationId,
+      );
       // ✅ إصلاح — كانت الشاشة تُحمّل GET /admin/recent-activity وهو مسار
       // إداري محمي بـ role:1، فيعود بـ 403 لكل مستخدم عادي وتبقى قائمة
       // الإشعارات فارغة. الإشعارات الحقيقية للمستخدم لها مسارها الخاص.
@@ -44,7 +49,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final provider = context.watch<AppProvider>();
     final isDark = provider.isDarkMode;
     final productProvider = context.watch<ProductProvider>();
-    final gapProducts = productProvider.products.take(5).toList();
+    // ═════════════════════════════════════════════════════════════
+    // ✅ إصلاح — "أكبر الفروقات" كان يأخذ أول خمسة منتجات من
+    // القائمة كما يعيدها الخادم (مرتّبة أبجدياً بالاسم)، بلا أي ترتيب
+    // حسب الفرق — فتظهر منتجات بلا أي سعر مسجّل في المنطقة (0 مقابل 0)
+    // بينما المنتج صاحب أكبر فرق لا يظهر إطلاقاً.
+    // الآن من topGapProducts: ترتيب تنازلي حسب (الحقيقي − الرسمي) يحسبه
+    // الخادم للمنطقة المختارة وحدها.
+    // ═════════════════════════════════════════════════════════════
+    final gapProducts = productProvider.topGapProducts;
     // ✅ إشعارات المستخدم الحقيقية (GET /notifications)، لا سجل النشاط
     // الإداري الذي كان يُطلب سابقاً ويعود بـ 403.
     final notifications = context.watch<NotificationProvider>().notifications;
@@ -351,10 +364,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
 
                 // Product gap cards
-                if (productProvider.isLoading && gapProducts.isEmpty)
+                if (productProvider.isLoadingTopGaps && gapProducts.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
                     child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (gapProducts.isEmpty)
+                  // منطقة بلا أي سعر سوقي مسجّل بعد: لا يوجد فرق يُقارن،
+                  // وقول ذلك صراحةً أوضح من فراغ أو من بطاقات أصفار.
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'لا توجد أسعار مسجّلة في هذه المنطقة بعد',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondaryOf(context),
+                        ),
+                      ),
+                    ),
                   )
                 else
                   ...gapProducts
@@ -394,10 +423,13 @@ class _HomeScreenState extends State<HomeScreen> {
           locationId: locationId,
         );
         if (!context.mounted) return;
-        await context.read<ProductProvider>().loadProducts(
-              locationId: provider.selectedLocationId,
-              refresh: true,
-            );
+        final products = context.read<ProductProvider>();
+        await products.loadProducts(
+          locationId: provider.selectedLocationId,
+          refresh: true,
+        );
+        // الترتيب خاص بالمنطقة، فيُعاد حسابه على الخادم مع كل تغيير حي.
+        await products.loadTopGaps(locationId: provider.selectedLocationId);
       },
     );
   }

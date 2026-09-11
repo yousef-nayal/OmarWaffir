@@ -122,15 +122,22 @@ class StoreTest extends TestCase
     }
 
     #[Test]
-    public function deleting_a_store_keeps_its_historical_prices(): void
+    public function deleting_a_store_deletes_the_prices_submitted_for_it(): void
     {
         $admin = User::factory()->admin()->create();
         $store = Store::factory()->create();
         $price = Price::factory()->create(['store_id' => $store->id]);
+        $survivor = Price::factory()->create();
+
+        $this->actingAs($admin)
+            ->getJson("/api/v1/admin/deletion-impact/store/{$store->id}")
+            ->assertOk()
+            ->assertJsonPath('data.prices', 1);
 
         $this->actingAs($admin)->deleteJson("/api/v1/stores/{$store->id}")->assertOk();
 
         $this->assertSoftDeleted('stores', ['id' => $store->id]);
-        $this->assertDatabaseHas('prices', ['id' => $price->id]);
+        $this->assertDatabaseMissing('prices', ['id' => $price->id]);
+        $this->assertDatabaseHas('prices', ['id' => $survivor->id]);
     }
 }

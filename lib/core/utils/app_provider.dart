@@ -581,6 +581,60 @@ class ProductProvider extends ChangeNotifier {
   List<String> _categories = const ['الكل'];
   List<String> get categories => _categories;
 
+  // ═══════════════════════════════════════════════════════════════
+  // ✅ جديد — "أكبر الفروقات" في الصفحة الرئيسية: قائمة مستقلة
+  // عن [_products] عمداً. قائمة المنتجات مشتركة مع شاشة المنتجات
+  // ومرقّمة ومفلترة بتصنيف/بحث، فتغيير ترتيبها من الصفحة الرئيسية كان
+  // سيقلب ترتيب شاشة المنتجات معها.
+  // ═══════════════════════════════════════════════════════════════
+  List<ProductModel> _topGapProducts = [];
+  bool _isLoadingTopGaps = false;
+
+  /// المنتجات الأكبر فرقاً بين السعر الحقيقي والرسمي في المنطقة
+  /// المختارة، مرتّبة تنازلياً. تُستبعد المنتجات التي ينقصها أحد
+  /// السعرين في تلك المنطقة — لا يوجد فرق يمكن عرضه.
+  List<ProductModel> get topGapProducts => _topGapProducts;
+  bool get isLoadingTopGaps => _isLoadingTopGaps;
+
+  Future<void> loadTopGaps({String? locationId, int limit = 5}) async {
+    _isLoadingTopGaps = true;
+    notifyListeners();
+
+    if (AppConfig.useMockData) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      _topGapProducts = _rankByGap(MockData.products, limit);
+      _isLoadingTopGaps = false;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final response = await _service.getProducts(
+        locationId: locationId,
+        sort: 'gap',
+        perPage: limit,
+      );
+      _topGapProducts = _rankByGap(response.data ?? const [], limit);
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+    } finally {
+      _isLoadingTopGaps = false;
+      notifyListeners();
+    }
+  }
+
+  /// الخادم يرتّب ويُنزل غير القابل للمقارنة إلى الذيل؛ هذا يحذفه
+  /// من العرض (بطاقة "0 مقابل 0" لا تعني شيئاً للمستخدم)، ويضمن
+  /// الترتيب أيضاً في وضع البيانات التجريبية.
+  List<ProductModel> _rankByGap(List<ProductModel> source, int limit) {
+    final comparable = source
+        .where((p) => p.officialPrice > 0 && p.realPrice > 0)
+        .toList()
+      ..sort((a, b) => (b.realPrice - b.officialPrice)
+          .compareTo(a.realPrice - a.officialPrice));
+    return comparable.take(limit).toList();
+  }
+
   Future<void> loadCategories() async {
     if (AppConfig.useMockData) {
       _categories = [
@@ -1679,7 +1733,13 @@ class CatalogProvider extends ChangeNotifier {
     }
     try {
       final sectorId = sectorIdForName(sector);
-      if (sectorId == null) return false;
+      // ✅ كان الرفض هنا صامتاً تماماً: الكتلة معروفة محلياً فقط ولا
+      // يقابلها صف في جدول sectors، فلا يمكن إرسال sector_id.
+      if (sectorId == null) {
+        errorMessage = 'هذه الكتلة غير موجودة على الخادم';
+        notifyListeners();
+        return false;
+      }
       final l =
           await _service.createLocation(sectorId: sectorId, district: area);
       locations = [...locations, l];
@@ -1717,7 +1777,13 @@ class CatalogProvider extends ChangeNotifier {
     }
     try {
       final sectorId = sectorIdForName(sector);
-      if (sectorId == null) return false;
+      // ✅ كان الرفض هنا صامتاً تماماً: الكتلة معروفة محلياً فقط ولا
+      // يقابلها صف في جدول sectors، فلا يمكن إرسال sector_id.
+      if (sectorId == null) {
+        errorMessage = 'هذه الكتلة غير موجودة على الخادم';
+        notifyListeners();
+        return false;
+      }
       final updated =
           await _service.updateLocation(id, sectorId: sectorId, district: area);
       locations = locations.map((l) => l.id == id ? updated : l).toList();
@@ -1773,6 +1839,18 @@ class CatalogProvider extends ChangeNotifier {
       if (loc.area.trim() == trimmed) return loc.id;
     }
     return null;
+  }
+
+  /// ✅ جديد — ما سيُحذف مع عنصر معين، لعرضه في نافذة التأكيد.
+  /// يُرجع null إن تعذّر الاستعلام — فشل المعاينة لا يجوز أن يمنع
+  /// المسؤول من الحذف، فتُعرض النافذة بلا أرقام.
+  Future<DeletionImpact?> deletionImpact(String type, String id) async {
+    if (AppConfig.useMockData) return const DeletionImpact();
+    try {
+      return await _service.getDeletionImpact(type, id);
+    } on ApiException {
+      return null;
+    }
   }
 
   Future<void> loadSectors() async {
